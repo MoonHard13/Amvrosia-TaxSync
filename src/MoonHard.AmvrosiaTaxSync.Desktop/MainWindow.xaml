@@ -18,7 +18,7 @@
 
         <StackPanel Grid.Row="0">
             <TextBlock Text="AMVROSIA TAXSYNC" Foreground="{StaticResource AccentBrush}"
-                       FontSize="14" FontWeight="Bold" CharacterSpacing="2"/>
+                       FontSize="14" FontWeight="Bold"/>
             <TextBlock Text="Έλεγχος &amp; επιθεώρηση SQL Server" FontSize="28"
                        FontWeight="SemiBold" Margin="0,6,0,0"/>
             <TextBlock Text="by MoonHard  •  Στάδιο 1: ασφαλής ανάγνωση και αναγνώριση schema"

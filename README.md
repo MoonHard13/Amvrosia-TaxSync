@@ -30,7 +30,7 @@
     dotnet run --project src/MoonHard.AmvrosiaTaxSync.Cli -- test --server localhost --database master
     dotnet run --project src/MoonHard.AmvrosiaTaxSync.Cli -- scan --server localhost --database master
 
-Για SQL Authentication: χρησιμοποίησε \`--auth sql --user username\` και όρισε προσωρινά την μεταβλητή περιβάλλοντος \`AMVROSIA_SQL_PASSWORD\`. Μην εισάγεις ποτέ κωδικούς σε command-line arguments ή στο GitHub.
+Για SQL Authentication: χρησιμοποίησε `--auth sql --user username` και όρισε προσωρινά την μεταβλητή περιβάλλοντος `AMVROSIA_SQL_PASSWORD`. Μην εισάγεις ποτέ κωδικούς σε command-line arguments ή στο GitHub.
 
 ## Documentation
 

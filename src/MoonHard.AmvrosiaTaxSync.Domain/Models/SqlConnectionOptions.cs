@@ -20,7 +20,7 @@ public sealed record SqlConnectionOptions(
         if (Port is < 0 or > 65535)
             throw new ArgumentOutOfRangeException(nameof(Port), "Η θύρα πρέπει να είναι 0 ή μεταξύ 1 και 65535.");
 
-        if (Port > 0 && Server.Contains('\\', StringComparison.Ordinal))
+        if (Port > 0 && Server.Contains('\\'))
             throw new ArgumentException("Χρησιμοποίησε όνομα instance ή συγκεκριμένη θύρα, όχι και τα δύο.", nameof(Port));
 
         if (TimeoutSeconds is < 1 or > 120)

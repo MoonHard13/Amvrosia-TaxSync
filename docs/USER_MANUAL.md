@@ -30,9 +30,9 @@ dotnet run --project src/MoonHard.AmvrosiaTaxSync.Desktop
 
 ## 4. Σύνδεση SQL Server
 
-1. Συμπλήρωσε το πεδίο **Server / Instance** (π.χ. \`localhost\` ή \`SERVER\INSTANCE\`).
+1. Συμπλήρωσε το πεδίο **Server / Instance** (π.χ. `localhost` ή `SERVER\INSTANCE`).
 2. Συμπλήρωσε την **Database** (το πραγματικό όνομα βάσης).
-3. Προαιρετικά όρισε **Port**. Η τιμή \`0\` χρησιμοποιεί τις προεπιλογές SQL Server.
+3. Προαιρετικά όρισε **Port**. Η τιμή `0` χρησιμοποιεί τις προεπιλογές SQL Server.
 4. Χρησιμοποίησε **Windows Authentication**, εφόσον έχεις κατάλληλα δικαιώματα.
 5. Για SQL Authentication, απενεργοποίησε το Windows Authentication και συμπλήρωσε SQL Username και SQL Password.
 6. Πάτησε **Έλεγχος σύνδεσης (Ctrl+T)**.
@@ -74,9 +74,11 @@ dotnet run --project src/MoonHard.AmvrosiaTaxSync.Cli -- scan --server localhost
 Για SQL Authentication:
 
 ~~~powershell
-$env:AMVROSIA_SQL_PASSWORD = Read-Host "SQL password"
+$secret = Read-Host "SQL password" -AsSecureString
+$env:AMVROSIA_SQL_PASSWORD = [System.Net.NetworkCredential]::new("", $secret).Password
 dotnet run --project src/MoonHard.AmvrosiaTaxSync.Cli -- test --server SERVER --database DB --auth sql --user USER
 Remove-Item Env:AMVROSIA_SQL_PASSWORD
+$secret.Dispose()
 ~~~
 
 {% hint style="warning" %}
@@ -87,8 +89,8 @@ Exit codes CLI: **0** επιτυχία, **1** σφάλμα, **2** λάθος π�
 
 ## 8. Αρχεία ρυθμίσεων και logs
 
-- Ρυθμίσεις: \`%LOCALAPPDATA%\MoonHard\AmvrosiaTaxSync\settings.json\`
-- Logs: \`%LOCALAPPDATA%\MoonHard\AmvrosiaTaxSync\Logs\taxsync-YYYY-MM-DD.jsonl\`
+- Ρυθμίσεις: `%LOCALAPPDATA%\MoonHard\AmvrosiaTaxSync\settings.json`
+- Logs: `%LOCALAPPDATA%\MoonHard\AmvrosiaTaxSync\Logs\taxsync-YYYY-MM-DD.jsonl`
 
 Τα logs περιλαμβάνουν χρόνο, επίπεδο, κατηγορία και τεχνικό μήνυμα. Δεν περιλαμβάνουν SQL passwords ή ολοκληρωμένα connection strings.
 
@@ -108,7 +110,7 @@ Exit codes CLI: **0** επιτυχία, **1** σφάλμα, **2** λάθος π�
 - Κράτησε κανονικά SQL backups μέσω της τυπικής διαδικασίας του οργανισμού.
 - Μην δίνεις production credentials σε issues, screenshots ή source files.
 - Η προσθήκη field mappings, ΑΑΔΕ και εγκεκριμένων ενημερώσεων θα γίνει σε ξεχωριστά Pull Requests μετά την επιβεβαίωση πραγματικού schema και επίσημων κανόνων σύνδεσης.
-- Για έκδοση Windows executable: \`dotnet publish src/MoonHard.AmvrosiaTaxSync.Desktop -c Release -r win-x64 --self-contained true\`. Η εκτέλεση σε καθαρό Windows υπολογιστή χρειάζεται ξεχωριστή επιβεβαίωση.
+- Για έκδοση Windows executable: `dotnet publish src/MoonHard.AmvrosiaTaxSync.Desktop -c Release -r win-x64 --self-contained true`. Η εκτέλεση σε καθαρό Windows υπολογιστή χρειάζεται ξεχωριστή επιβεβαίωση.
 
 {% hint style="info" %}
 Το παρόν manual καλύπτει την έκδοση foundation v0.1.0. Η εγκατάσταση installer και η αυτοματοποίηση updates δεν είναι διαθέσιμες ακόμη.
