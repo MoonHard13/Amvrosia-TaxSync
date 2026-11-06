@@ -42,7 +42,7 @@ public sealed class SqlSchemaService(ILogger<SqlSchemaService> logger) : ISqlSch
         if (options.TrustServerCertificate)
             logger.LogWarning("SQL connection requested without server certificate identity verification.");
 
-        await using var connection = new SqlConnection(BuildConnectionString(options));
+        await using var connection = new SqlConnection(SqlConnectionFactory.BuildConnectionString(options));
         await connection.OpenAsync(cancellationToken);
 
         await using var command = connection.CreateCommand();
@@ -67,7 +67,7 @@ public sealed class SqlSchemaService(ILogger<SqlSchemaService> logger) : ISqlSch
         if (options.TrustServerCertificate)
             logger.LogWarning("SQL schema inspection requested without server certificate identity verification.");
 
-        await using var connection = new SqlConnection(BuildConnectionString(options));
+        await using var connection = new SqlConnection(SqlConnectionFactory.BuildConnectionString(options));
         await connection.OpenAsync(cancellationToken);
 
         await using var command = connection.CreateCommand();
@@ -104,26 +104,4 @@ public sealed class SqlSchemaService(ILogger<SqlSchemaService> logger) : ISqlSch
         return result;
     }
 
-    private static string BuildConnectionString(SqlConnectionOptions options)
-    {
-        var builder = new SqlConnectionStringBuilder
-        {
-            DataSource = options.Port == 0 ? options.Server.Trim() : $"{options.Server.Trim()},{options.Port}",
-            InitialCatalog = options.Database.Trim(),
-            IntegratedSecurity = options.WindowsAuthentication,
-            Encrypt = SqlConnectionEncryptOption.Mandatory,
-            TrustServerCertificate = options.TrustServerCertificate,
-            ConnectTimeout = options.TimeoutSeconds,
-            PersistSecurityInfo = false,
-            ApplicationName = "Amvrosia TaxSync by MoonHard"
-        };
-
-        if (!options.WindowsAuthentication)
-        {
-            builder.UserID = options.Username;
-            builder.Password = options.Password;
-        }
-
-        return builder.ConnectionString;
-    }
 }
