@@ -10,7 +10,8 @@ public sealed record ConnectionPreferences(
     bool WindowsAuthentication = true,
     string Username = "",
     int Port = 0,
-    int TimeoutSeconds = 15);
+    int TimeoutSeconds = 15,
+    string Theme = "Dark");
 
 public sealed class ConnectionPreferencesStore(ILogger<ConnectionPreferencesStore> logger)
 {
