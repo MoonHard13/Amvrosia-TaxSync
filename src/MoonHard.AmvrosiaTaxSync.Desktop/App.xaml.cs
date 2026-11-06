@@ -24,6 +24,7 @@ public partial class App : System.Windows.Application
             builder.AddProvider(new JsonFileLoggerProvider());
         });
         registrations.AddSingleton<ISqlSchemaService, SqlSchemaService>();
+        registrations.AddSingleton<ICustomerReadService, CustomerReadService>();
         registrations.AddSingleton<ConnectionPreferencesStore>();
         registrations.AddSingleton<UdlConnectionFileReader>();
         registrations.AddSingleton<ThemeService>();
