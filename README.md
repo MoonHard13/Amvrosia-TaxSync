@@ -9,7 +9,7 @@
 - Μοντέρνο WPF workspace με sidebar, ευανάγνωστα controls, **Light/Dark mode** και αποθήκευση επιλογής θέματος.
 - **Φόρτωση UDL** SQL Server (`.udl`, UTF-16/UTF-8), αναγνώριση server, database, authentication, username, port, timeout και προσωρινή χρήση password.
 - Χειροκίνητη σύνδεση με Windows ή SQL Authentication.
-- Test Connection με TLS encryption / server certificate validation.
+- Test Connection με `Encrypt=Mandatory;TrustServerCertificate=True` από προεπιλογή.
 - **Read-only Schema Explorer** με tables, views, columns, PK/FK και ζωντανή αναζήτηση.
 - Ακύρωση μεγάλων SQL εργασιών, CLI με `--udl`, τεχνικά logs, unit tests και Windows CI.
 
@@ -38,12 +38,12 @@ dotnet run --project src/MoonHard.AmvrosiaTaxSync.Cli -- test --server localhost
 
 ## Προϋποθέσεις
 
-Windows 10/11, .NET 10 SDK και SQL Server με αξιόπιστο TLS certificate. Για την επιθεώρηση απαιτούνται δικαιώματα ανάγνωσης SQL metadata.
+Windows 10/11, .NET 10 SDK και προσβάσιμος SQL Server. Για την επιθεώρηση απαιτούνται δικαιώματα ανάγνωσης SQL metadata.
 
 ## Ασφάλεια
 
 {% hint style="warning" %}
-Ορισμένα UDL αρχεία περιέχουν password **σε απλό κείμενο**. Χρησιμοποίησε μόνο εξουσιοδοτημένα αρχεία, μην τα ανεβάζεις στο Git και μην τα επισυνάπτεις σε issues. Η εφαρμογή δεν αποθηκεύει το password στα preferences/logs ούτε απενεργοποιεί το certificate validation. Οι ρυθμίσεις TLS ή άλλες παλιές επιλογές provider από το UDL δεν μεταφέρονται αυτούσιες στον SqlClient.
+Ορισμένα UDL αρχεία περιέχουν password **σε απλό κείμενο**. Χρησιμοποίησε μόνο εξουσιοδοτημένα αρχεία, μην τα ανεβάζεις στο Git και μην τα επισυνάπτεις σε issues. Η εφαρμογή δεν αποθηκεύει το password στα preferences/logs. Η προεπιλογή είναι `TrustServerCertificate=True`. Οι ρυθμίσεις TLS ή άλλες παλιές επιλογές provider από το UDL δεν μεταφέρονται αυτούσιες στον SqlClient.
 {% endhint %}
 
 [Αναλυτικό ελληνικό User Manual](docs/USER_MANUAL.md)
@@ -61,8 +61,8 @@ Feature branch → Pull Request → GitHub Actions → review → merge. Δοκ�
 **Παραμένει απαραίτητος χειροκίνητος έλεγχος SQL σύνδεσης και οπτικός έλεγχος WPF tooltips σε Windows.**
 
 
-### Προσωρινή εξαίρεση SQL TLS (μόνο ελεγχόμενο testing)
+### Προεπιλεγμένη σύνδεση TLS
 
-Στο WPF υπάρχει προαιρετική επιλογή **Εξαίρεση πιστοποιητικού (μόνο δοκιμές)** με modal επιβεβαίωση. Απαιτεί συνειδητή ενεργοποίηση, δεν αποθηκεύεται και απενεργοποιείται όταν αλλάξεις SQL Server/UDL ή επανεκκινήσεις την εφαρμογή. Η CLI επιλογή --trust-server-certificate true επιτρέπεται για ρητά ελεγχόμενες δοκιμές.
+Το WPF και το CLI χρησιμοποιούν `Encrypt=Mandatory;TrustServerCertificate=True` χωρίς ανάγκη ενεργοποίησης εξαίρεσης. Το GUI προσφέρει επιλογή απενεργοποίησης της εξαίρεσης, ενώ το CLI δέχεται `--trust-server-certificate false` για αυστηρή επαλήθευση.
 
-Η κρυπτογράφηση (Encrypt=Mandatory) διατηρείται, αλλά η ταυτότητα του server δεν επαληθεύεται κατά την εξαίρεση. Για παραγωγή απαιτείται έμπιστο πιστοποιητικό.
+Η κρυπτογράφηση παραμένει ενεργή, όμως η ταυτότητα του server δεν επαληθεύεται με την προεπιλογή. Συνιστάται έγκυρο TLS certificate και αυστηρή επαλήθευση σε παραγωγικά περιβάλλοντα.

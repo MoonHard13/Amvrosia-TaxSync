@@ -27,7 +27,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
     private string _timeout = "15";
     private string _username = "";
     private bool _windowsAuthentication = true;
-    private bool _trustServerCertificate;
+    private bool _trustServerCertificate = true;
     private bool _isBusy;
     private string _status = "Συμπλήρωσε τα στοιχεία SQL ή φόρτωσε ένα αρχείο UDL.";
     private string _failureTitle = "";
@@ -82,8 +82,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         get => _server;
         set
         {
-            if (Set(ref _server, value))
-                DisableCertificateOverride();
+            Set(ref _server, value);
         }
     }
     public string Database { get => _database; set => Set(ref _database, value); }
@@ -146,7 +145,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         : "Εξαίρεση πιστοποιητικού (μόνο δοκιμές)";
 
     public string CertificateTrustDetails => TrustServerCertificate
-        ? "Η επαλήθευση ταυτότητας SQL Server είναι ανενεργή για αυτή τη συνεδρία. Η σύνδεση παραμένει κρυπτογραφημένη."
+        ? "Encrypt=Mandatory • TrustServerCertificate=True. Η σύνδεση παραμένει κρυπτογραφημένη, χωρίς επαλήθευση πιστοποιητικού."
         : "Ασφαλής προεπιλογή: κρυπτογραφημένη σύνδεση με έλεγχο πιστοποιητικού.";
 
     public void EnableCertificateOverride()
@@ -278,11 +277,6 @@ public sealed class MainViewModel : INotifyPropertyChanged
         {
             Status = "Διαβάζονται οι ρυθμίσεις UDL...";
             var imported = await _udlReader.LoadAsync(path, cancellation.Token);
-            // Η εξαίρεση δεν κληρονομείται από άλλο UDL ή προηγούμενο SQL server.
-            _trustServerCertificate = false;
-            Changed(nameof(TrustServerCertificate));
-            Changed(nameof(CertificateTrustButtonText));
-            Changed(nameof(CertificateTrustDetails));
             Server = imported.Options.Server;
             Database = imported.Options.Database;
             Port = imported.Options.Port.ToString();

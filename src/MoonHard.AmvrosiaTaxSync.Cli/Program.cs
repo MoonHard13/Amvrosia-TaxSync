@@ -35,7 +35,7 @@ public static class Program
         {
             var parameters = ParseParameters(args.Skip(1).ToArray());
             SqlConnectionOptions options;
-            var overrideCertificate = false;
+            var overrideCertificate = true;
             if (parameters.TryGetValue("trust-server-certificate", out var overrideText) &&
                 !bool.TryParse(overrideText, out overrideCertificate))
                 throw new ArgumentException("Το --trust-server-certificate πρέπει να είναι true ή false.");
@@ -71,7 +71,7 @@ public static class Program
             options = options with { TrustServerCertificate = overrideCertificate };
             options.Validate();
 
-            if (overrideCertificate)
+            if (parameters.ContainsKey("trust-server-certificate") && overrideCertificate)
             {
                 Console.Error.WriteLine(
                     "ΠΡΟΕΙΔΟΠΟΙΗΣΗ: Παράκαμψη επαλήθευσης πιστοποιητικού SQL Server. " +
@@ -144,13 +144,13 @@ public static class Program
               scan --server SERVER --database DB [--auth windows|sql] [--user USER] [--port PORT]
               test --udl "C:\Data\connection.udl"
               scan --udl "C:\Data\connection.udl"
-              test --udl "C:\Data\connection.udl" --trust-server-certificate true
+              test --udl "C:\Data\connection.udl" --trust-server-certificate false
 
             Η εντολή scan διαβάζει αποκλειστικά SQL metadata και επιστρέφει JSON.
             Το --udl υποστηρίζει OLE DB UDL SQL Server και UTF-16/UTF-8.
             Για SQL Authentication μπορείς να ορίσεις AMVROSIA_SQL_PASSWORD.
-            --trust-server-certificate true: προσωρινή παράκαμψη TLS ταυτότητας.
-            Χρησιμοποίησε την παράκαμψη μόνο για γνωστά δοκιμαστικά περιβάλλοντα.
+            Προεπιλογή: Encrypt=Mandatory, TrustServerCertificate=True.
+            --trust-server-certificate false: επαλήθευση πιστοποιητικού SQL Server.
             Κανένας κωδικός δεν περνά ως command-line argument.
             Exit codes: 0 επιτυχία, 1 σφάλμα, 2 παράμετροι, 3 ακύρωση.
             """);

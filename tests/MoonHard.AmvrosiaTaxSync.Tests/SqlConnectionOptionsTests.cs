@@ -35,19 +35,19 @@ public sealed class SqlConnectionOptionsTests
     }
 
     [TestMethod]
-    public void ServerCertificateVerification_IsRequiredByDefault()
+    public void CertificateTrust_IsEnabledByDefault()
     {
         var settings = new SqlConnectionOptions("localhost", "master", true, null, null);
-        Assert.IsFalse(settings.TrustServerCertificate);
+        Assert.IsTrue(settings.TrustServerCertificate);
     }
 
     [TestMethod]
-    public void CertificateTrustOverride_RequiresExplicitTrue()
+    public void CertificateVerification_CanBeExplicitlyEnabled()
     {
         var settings = new SqlConnectionOptions("localhost", "master", true, null, null)
-            with { TrustServerCertificate = true };
+            with { TrustServerCertificate = false };
         settings.Validate();
-        Assert.IsTrue(settings.TrustServerCertificate);
+        Assert.IsFalse(settings.TrustServerCertificate);
     }
 
     [TestMethod]
