@@ -296,7 +296,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
                 Server, Database, WindowsAuthentication, Username, password, port, timeout,
                 TrustServerCertificate);
 
-            var query = new CustomerQuery(Customers.Search, requestedPage, Customers.PageSize);
+            var query = new CustomerQuery(Customers.Search, requestedPage, Customers.PageSize, Customers.OnlyWithAfm);
             Status = "Ανακτώνται οι πελάτες της Αμβροσίας (read-only)...";
             var page = await _customersService.LoadAsync(options, query, cancellation.Token);
             Customers.SetPage(page);
