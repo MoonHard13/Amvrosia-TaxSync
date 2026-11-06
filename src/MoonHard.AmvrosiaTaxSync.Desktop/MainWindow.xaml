@@ -27,6 +27,16 @@
                 </DataTrigger>
             </Style.Triggers>
         </Style>
+        <Style x:Key="CustomersNavigation" TargetType="Button"
+               BasedOn="{StaticResource SidebarButton}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsCustomersPage}" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource ActiveNavBrush}"/>
+                    <Setter Property="Foreground" Value="{DynamicResource AccentBrush}"/>
+                    <Setter Property="FontWeight" Value="Bold"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
     </Window.Resources>
 
     <Grid>
@@ -72,6 +82,10 @@
                     <Button Content="▤   Schema Explorer" Click="ExplorerPage_Click"
                             AutomationProperties.Name="Σελίδα Schema Explorer"
                             Style="{StaticResource ExplorerNavigation}"/>
+                    <Button Content="☷   Πελάτες Αμβροσίας" Click="CustomersPage_Click"
+                            AutomationProperties.Name="Σελίδα πελατών Αμβροσίας"
+                            Style="{StaticResource CustomersNavigation}"
+                            ToolTip="Ctrl+3 — Πελάτες Αμβροσίας"/>
                 </StackPanel>
 
                 <Border Grid.Row="3" Background="{DynamicResource ElevatedBrush}"
@@ -88,7 +102,7 @@
                 </Border>
 
                 <StackPanel Grid.Row="4" Margin="10,0,0,0">
-                    <TextBlock Text="v0.2.0 • Foundation" FontSize="11"
+                    <TextBlock Text="v0.3.0 • Customer Discovery" FontSize="11"
                                Foreground="{DynamicResource TextMutedBrush}"/>
                     <TextBlock Text="© MoonHard" FontSize="11" Margin="0,4,0,0"
                                Foreground="{DynamicResource TextMutedBrush}"/>
@@ -264,6 +278,112 @@
                                    Margin="4,14,0,12" TextWrapping="Wrap" TextTrimming="None"/>
                     </StackPanel>
                 </ScrollViewer>
+
+                <!-- Λίστα πελατών: ανάγνωση χωρίς μεταβολή στοιχείων ERP -->
+                <Grid Visibility="{Binding IsCustomersPage, Converter={StaticResource BoolToVisibility}}">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <Grid Grid.Row="0" Margin="0,0,0,15">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="14"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="14"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Border Grid.Column="0" Background="{DynamicResource SurfaceBrush}"
+                                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                                Padding="15" CornerRadius="12">
+                            <StackPanel>
+                                <TextBlock Text="ΣΥΝΟΛΟ ΠΕΛΑΤΩΝ" FontSize="11" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextMutedBrush}"/>
+                                <TextBlock Text="{Binding Customers.Total, StringFormat={}{0:N0}}"
+                                           FontSize="25" FontWeight="Bold" Margin="0,8,0,0"/>
+                            </StackPanel>
+                        </Border>
+                        <Border Grid.Column="2" Background="{DynamicResource SurfaceBrush}"
+                                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                                Padding="15" CornerRadius="12">
+                            <StackPanel>
+                                <TextBlock Text="ΜΕ ΑΦΜ" FontSize="11" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextMutedBrush}"/>
+                                <TextBlock Text="{Binding Customers.WithAfm, StringFormat={}{0:N0}}"
+                                           FontSize="25" FontWeight="Bold" Margin="0,8,0,0"/>
+                            </StackPanel>
+                        </Border>
+                        <Border Grid.Column="4" Background="{DynamicResource SurfaceBrush}"
+                                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                                Padding="15" CornerRadius="12">
+                            <StackPanel>
+                                <TextBlock Text="ΧΩΡΙΣ ΑΦΜ" FontSize="11" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextMutedBrush}"/>
+                                <TextBlock Text="{Binding Customers.WithoutAfm, StringFormat={}{0:N0}}"
+                                           FontSize="25" FontWeight="Bold" Margin="0,8,0,0"/>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <Grid Grid.Row="1" Margin="0,0,0,15">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="12"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBox Grid.Column="0" x:Name="CustomerSearchBox"
+                                 Text="{Binding Customers.Search, UpdateSourceTrigger=PropertyChanged}"
+                                 AutomationProperties.Name="Αναζήτηση πελάτη"
+                                 ToolTip="Αναζήτηση κωδικού, επωνυμίας, ονόματος ή ΑΦΜ. Enter για εκτέλεση."/>
+                        <Button Grid.Column="2" Content="Αναζήτηση / Ανανέωση"
+                                Click="LoadCustomers_Click"
+                                Style="{StaticResource PrimaryButton}"
+                                IsEnabled="{Binding IsIdle}"
+                                AutomationProperties.Name="Ανανέωση πελατών"/>
+                    </Grid>
+
+                    <Border Grid.Row="2" Background="{DynamicResource SurfaceBrush}"
+                            BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                            CornerRadius="13" Padding="12">
+                        <DataGrid ItemsSource="{Binding Customers.Rows}"
+                                  AutomationProperties.Name="Πελάτες TblSnCustomer"
+                                  IsReadOnly="True"
+                                  EnableRowVirtualization="True"
+                                  EnableColumnVirtualization="True">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Κωδικός" Binding="{Binding Code}" Width="105"/>
+                                <DataGridTextColumn Header="Επωνυμία" Binding="{Binding DisplayName}" Width="2*"/>
+                                <DataGridTextColumn Header="Όνομα" Binding="{Binding Name}" Width="*"/>
+                                <DataGridTextColumn Header="ΑΦΜ" Binding="{Binding Afm}" Width="120"/>
+                                <DataGridTextColumn Header="Έλεγχος ΑΦΜ" Binding="{Binding AfmStatusLabel}" Width="125"/>
+                                <DataGridTextColumn Header="Κατάσταση" Binding="{Binding ActivityLabel}" Width="95"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Border>
+
+                    <Grid Grid.Row="3" Margin="0,14,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Button Grid.Column="0" Content="← Προηγούμενη"
+                                Margin="0,0,9,0" Click="PreviousCustomers_Click"
+                                IsEnabled="{Binding Customers.HasPrevious}"
+                                ToolTip="Προηγούμενη σελίδα"/>
+                        <Button Grid.Column="1" Content="Επόμενη →"
+                                Click="NextCustomers_Click"
+                                IsEnabled="{Binding Customers.HasNext}"
+                                ToolTip="Επόμενη σελίδα"/>
+                        <TextBlock Grid.Column="2" Text="{Binding Customers.PageLabel}"
+                                   VerticalAlignment="Center" TextAlignment="Right"
+                                   Foreground="{DynamicResource TextMutedBrush}"
+                                   Margin="14,0,0,0" FontSize="12"/>
+                    </Grid>
+                </Grid>
 
                 <!-- Σελίδα αναγνώρισης πραγματικού schema -->
                 <Grid Visibility="{Binding IsExplorerPage, Converter={StaticResource BoolToVisibility}}">
