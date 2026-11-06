@@ -1,0 +1,8 @@
+<Solution>
+  <Project Path="src/MoonHard.AmvrosiaTaxSync.Domain/MoonHard.AmvrosiaTaxSync.Domain.csproj" />
+  <Project Path="src/MoonHard.AmvrosiaTaxSync.Application/MoonHard.AmvrosiaTaxSync.Application.csproj" />
+  <Project Path="src/MoonHard.AmvrosiaTaxSync.Infrastructure.SqlServer/MoonHard.AmvrosiaTaxSync.Infrastructure.SqlServer.csproj" />
+  <Project Path="src/MoonHard.AmvrosiaTaxSync.Desktop/MoonHard.AmvrosiaTaxSync.Desktop.csproj" />
+  <Project Path="src/MoonHard.AmvrosiaTaxSync.Cli/MoonHard.AmvrosiaTaxSync.Cli.csproj" />
+  <Project Path="tests/MoonHard.AmvrosiaTaxSync.Tests/MoonHard.AmvrosiaTaxSync.Tests.csproj" />
+</Solution>
