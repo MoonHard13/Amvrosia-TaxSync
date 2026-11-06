@@ -300,6 +300,7 @@ dotnet run --project src/MoonHard.AmvrosiaTaxSync.Cli -- test --udl "C:\Connecti
 ~~~powershell
 dotnet run --project src/MoonHard.AmvrosiaTaxSync.Cli -- customers --udl "C:\Connections\amvrosia.udl" --page 1 --page-size 100
 dotnet run --project src/MoonHard.AmvrosiaTaxSync.Cli -- customers --udl "C:\Connections\amvrosia.udl" --search "123456783"
+dotnet run --project src/MoonHard.AmvrosiaTaxSync.Cli -- customers --udl "C:\Connections\amvrosia.udl" --only-with-afm true
 dotnet run --project src/MoonHard.AmvrosiaTaxSync.Cli -- customers --server SQL-SERVER --database Amvrosia --auth windows
 ~~~
 
