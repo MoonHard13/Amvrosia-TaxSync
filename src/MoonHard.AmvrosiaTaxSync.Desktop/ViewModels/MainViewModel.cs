@@ -27,7 +27,6 @@ public sealed class MainViewModel : INotifyPropertyChanged
     private string _timeout = "15";
     private string _username = "";
     private bool _windowsAuthentication = true;
-    private bool _trustServerCertificate = true;
     private bool _isBusy;
     private string _status = "Συμπλήρωσε τα στοιχεία SQL ή φόρτωσε ένα αρχείο UDL.";
     private string _failureTitle = "";
@@ -131,37 +130,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
     public bool IsSqlAuthentication => !WindowsAuthentication;
 
-    public bool TrustServerCertificate => _trustServerCertificate;
-
-    public string CertificateTrustButtonText => TrustServerCertificate
-        ? "Ενεργή αποδοχή πιστοποιητικού"
-        : "Εξαίρεση πιστοποιητικού (μόνο δοκιμές)";
-
-    public string CertificateTrustDetails => TrustServerCertificate
-        ? "Encrypt=Mandatory • TrustServerCertificate=True. Η σύνδεση κρυπτογραφείται, χωρίς επαλήθευση της ταυτότητας του SQL Server."
-        : "Ασφαλής προεπιλογή: κρυπτογραφημένη σύνδεση με έλεγχο πιστοποιητικού.";
-
-    public void EnableCertificateOverride()
-    {
-        if (IsBusy || !Set(ref _trustServerCertificate, true, nameof(TrustServerCertificate)))
-            return;
-
-        Changed(nameof(CertificateTrustButtonText));
-        Changed(nameof(CertificateTrustDetails));
-        Status = "ΠΡΟΕΙΔΟΠΟΙΗΣΗ: Προσωρινή εξαίρεση TLS ενεργή για γνωστό δοκιμαστικό SQL Server.";
-        _logger.LogWarning("User enabled session-only server certificate validation bypass.");
-    }
-
-    public void DisableCertificateOverride()
-    {
-        if (IsBusy || !Set(ref _trustServerCertificate, false, nameof(TrustServerCertificate)))
-            return;
-
-        Changed(nameof(CertificateTrustButtonText));
-        Changed(nameof(CertificateTrustDetails));
-        Status = "Η επαλήθευση πιστοποιητικού TLS είναι ενεργή.";
-        _logger.LogInformation("Server certificate verification enabled.");
-    }
+    // Η σύνδεση χρησιμοποιεί την επιλεγμένη σταθερή προεπιλογή.
+    public bool TrustServerCertificate => true;
 
     public bool IsBusy
     {
