@@ -1,5 +1,7 @@
 using System.Text.Json;
+using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Logging;
+using MoonHard.AmvrosiaTaxSync.Infrastructure.SqlServer.Diagnostics;
 using MoonHard.AmvrosiaTaxSync.Application.Services;
 using MoonHard.AmvrosiaTaxSync.Domain.Models;
 using MoonHard.AmvrosiaTaxSync.Infrastructure.SqlServer.SqlServer;
@@ -81,6 +83,13 @@ public static class Program
         {
             Console.Error.WriteLine("Η διαδικασία ακυρώθηκε.");
             return 3;
+        }
+        catch (SqlException ex)
+        {
+            var diagnostic = SqlConnectionErrorFormatter.Diagnose(ex);
+            Console.Error.WriteLine($"{diagnostic.Title} {diagnostic.Suggestion}");
+            Console.Error.WriteLine(diagnostic.TechnicalDetails);
+            return 1;
         }
         catch (Exception ex) when (ex is ArgumentException or FormatException or OverflowException or NotSupportedException)
         {
