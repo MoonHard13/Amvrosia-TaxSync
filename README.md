@@ -70,7 +70,7 @@ Feature branch → Pull Request → GitHub Actions → review → merge. Δοκ�
 
 ### Phase 2 — Πελάτες Αμβροσίας (v0.3.0)
 
-Η εφαρμογή διαβάζει σελίδες 100 εγγραφών από τον πραγματικό πίνακα **TblSnCustomer** και παρουσιάζει **CustCode, CustTitle, CustName, CustAFM, CustInactive**, στατιστικά με / χωρίς ΑΦΜ και τοπική εγκυρότητα ελληνικού ΑΦΜ. Υπάρχει αναζήτηση (SQL parameters), πλοήγηση με Ctrl+3, read-only λειτουργία και υποστήριξη CLI.
+Η εφαρμογή διαβάζει σελίδες 100 εγγραφών από τον πραγματικό πίνακα **TblSnCustomer** και παρουσιάζει **CustCode, CustTitle, CustName, CustAFM, CustInactive**, στατιστικά με / χωρίς ΑΦΜ, φίλτρο μόνο με ΑΦΜ και τοπική εγκυρότητα ελληνικού ΑΦΜ. Υπάρχει αναζήτηση (SQL parameters), πλοήγηση με Ctrl+3, read-only λειτουργία και υποστήριξη CLI.
 
 Παράδειγμα:
 
