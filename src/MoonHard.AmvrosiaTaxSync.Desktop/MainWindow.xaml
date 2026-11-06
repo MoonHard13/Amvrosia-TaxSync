@@ -329,6 +329,10 @@
                     </Grid>
 
                     <Grid Grid.Row="1" Margin="0,0,0,15">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="12"/>
@@ -343,6 +347,11 @@
                                 Style="{StaticResource PrimaryButton}"
                                 IsEnabled="{Binding IsIdle}"
                                 AutomationProperties.Name="Ανανέωση πελατών"/>
+                        <CheckBox Grid.Row="1" Grid.ColumnSpan="3"
+                                  Content="Μόνο πελάτες με ΑΦΜ"
+                                  IsChecked="{Binding Customers.OnlyWithAfm}"
+                                  Margin="2,10,0,0"
+                                  AutomationProperties.Name="Φίλτρο μόνο πελατών με ΑΦΜ"/>
                     </Grid>
 
                     <Border Grid.Row="2" Background="{DynamicResource SurfaceBrush}"
