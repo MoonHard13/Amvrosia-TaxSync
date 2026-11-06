@@ -168,3 +168,38 @@ dotnet publish src/MoonHard.AmvrosiaTaxSync.Desktop -c Release -r win-x64 --self
 {% hint style="warning" %}
 Το επιτυχημένο build/test στο GitHub Actions δεν αντικαθιστά τον χειροκίνητο οπτικό έλεγχο WPF ή τον έλεγχο με πραγματικό SQL Server.
 {% endhint %}
+
+## 13. Διάγνωση αποτυχίας SQL Server
+
+Η εφαρμογή εμφανίζει πλέον ξεχωριστή κάρτα διάγνωσης όταν αποτυγχάνει το Test Connection ή το Schema Explorer.
+
+1. Δοκίμασε **Έλεγχος σύνδεσης (Ctrl+T)**.
+2. Αν προκύψει αποτυχία, δες την περιγραφή και την πρόταση επίλυσης.
+3. Πάτησε **Αντιγραφή διάγνωσης** για να αποθηκεύσεις το ασφαλές αναγνωριστικό προβλήματος.
+4. Κατάγραψε μόνο τον αριθμό SQL, State, Severity και Connection ID στο τεχνικό ticket.
+
+### Συνήθεις SQL κωδικοί
+
+| SQL Number | Πιθανό πρόβλημα | Έλεγχος |
+| --- | --- | --- |
+| 18456 | Αποτυχία login | Authentication, credentials, SQL login |
+| 18452 | Windows Authentication / domain | Domain, account trust |
+| 4060 / 916 | Μη προσβάσιμη βάση | Database name, SQL user mapping/permissions |
+| 26 / 53 / 10060 / 10061 | Server/instance ή δικτύωση | Server, port, firewall, SQL Browser |
+| -2 | Timeout | Δίκτυο, χρόνο απόκρισης, ρύθμιση timeout |
+| 233 | Κλείσιμο σύνδεσης από τον server | SQL error logs, protocols, authentication |
+| 0 με ένδειξη TLS / SSL / certificate | Πιστοποιητικό ή TLS | Certificate trust chain, server name, λήξη certificate |
+
+{% hint style="warning" %}
+Ο ίδιος SQL Number μπορεί να εμφανιστεί για διαφορετικές πραγματικές αιτίες. Οι προτάσεις είναι διαγνωστικά βήματα, όχι εγγυημένη διάγνωση. Για λεπτομερή διερεύνηση έλεγξε SQL Server Error Log και Windows Event Viewer.
+{% endhint %}
+
+{% hint style="danger" %}
+Η εφαρμογή διατηρεί το \`Encrypt=Mandatory\` και \`TrustServerCertificate=False\`. Μην απενεργοποιήσεις certificate validation για να πετύχει το Test Connection. Εγκατάστησε σωστό, έμπιστο TLS certificate ή ζήτησε από τον διαχειριστή του server να διορθώσει την εγκατάσταση.
+{% endhint %}
+
+### Light / Dark tooltips
+
+Τα tooltips των κουμπιών ακολουθούν τη χρωματική παλέτα του προγράμματος και έχουν ρητά καθορισμένα χρώματα κειμένου, φόντου και περιγράμματος. Έλεγξε οπτικά hover/keyboard focus σε Light και Dark Mode.
+
+Τα SQL passwords, τα UDL περιεχόμενα και τα πλήρη SQL exceptions **δεν** συμπεριλαμβάνονται στα κοινά logs ή στο κείμενο που αντιγράφει το κουμπί **Αντιγραφή διάγνωσης**.
