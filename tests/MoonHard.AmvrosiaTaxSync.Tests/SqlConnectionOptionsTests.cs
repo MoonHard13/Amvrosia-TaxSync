@@ -35,6 +35,22 @@ public sealed class SqlConnectionOptionsTests
     }
 
     [TestMethod]
+    public void ServerCertificateVerification_IsRequiredByDefault()
+    {
+        var settings = new SqlConnectionOptions("localhost", "master", true, null, null);
+        Assert.IsFalse(settings.TrustServerCertificate);
+    }
+
+    [TestMethod]
+    public void CertificateTrustOverride_RequiresExplicitTrue()
+    {
+        var settings = new SqlConnectionOptions("localhost", "master", true, null, null)
+            with { TrustServerCertificate = true };
+        settings.Validate();
+        Assert.IsTrue(settings.TrustServerCertificate);
+    }
+
+    [TestMethod]
     public void InvalidTimeout_IsRejected()
     {
         var settings = new SqlConnectionOptions("localhost", "master", true, null, null, 0, 0);

@@ -35,11 +35,15 @@ public static class Program
         {
             var parameters = ParseParameters(args.Skip(1).ToArray());
             SqlConnectionOptions options;
+            var overrideCertificate = false;
+            if (parameters.TryGetValue("trust-server-certificate", out var overrideText) &&
+                !bool.TryParse(overrideText, out overrideCertificate))
+                throw new ArgumentException("Το --trust-server-certificate πρέπει να είναι true ή false.");
 
             if (parameters.TryGetValue("udl", out var udlPath))
             {
-                if (parameters.Count != 1)
-                    throw new ArgumentException("Η επιλογή --udl δεν συνδυάζεται με άλλες παραμέτρους.");
+                if (parameters.Keys.Any(key => key is not ("udl" or "trust-server-certificate")))
+                    throw new ArgumentException("Με --udl επιτρέπεται μόνο το --trust-server-certificate.");
 
                 var imported = await new UdlConnectionFileReader().LoadAsync(udlPath, cancellation.Token);
                 options = imported.Options with
@@ -64,7 +68,16 @@ public static class Program
                     int.Parse(parameters.GetValueOrDefault("timeout", "15")));
             }
 
+            options = options with { TrustServerCertificate = overrideCertificate };
             options.Validate();
+
+            if (overrideCertificate)
+            {
+                Console.Error.WriteLine(
+                    "ΠΡΟΕΙΔΟΠΟΙΗΣΗ: Παράκαμψη επαλήθευσης πιστοποιητικού SQL Server. " +
+                    "Μόνο για εξουσιοδοτημένη δοκιμή σε γνωστό server. Η σύνδεση εξακολουθεί να κρυπτογραφείται.");
+            }
+
             using var loggerFactory = LoggerFactory.Create(_ => { });
             var service = new SqlSchemaService(loggerFactory.CreateLogger<SqlSchemaService>());
 
@@ -113,7 +126,7 @@ public static class Program
                 throw new ArgumentException("Οι επιλογές πρέπει να έχουν μορφή --όνομα τιμή.");
 
             var key = args[index][2..];
-            if (key is not ("server" or "database" or "auth" or "user" or "port" or "timeout" or "udl"))
+            if (key is not ("server" or "database" or "auth" or "user" or "port" or "timeout" or "udl" or "trust-server-certificate"))
                 throw new ArgumentException($"Άγνωστη παράμετρος: --{key}");
 
             if (!parsed.TryAdd(key, args[index + 1]))
@@ -131,10 +144,13 @@ public static class Program
               scan --server SERVER --database DB [--auth windows|sql] [--user USER] [--port PORT]
               test --udl "C:\Data\connection.udl"
               scan --udl "C:\Data\connection.udl"
+              test --udl "C:\Data\connection.udl" --trust-server-certificate true
 
             Η εντολή scan διαβάζει αποκλειστικά SQL metadata και επιστρέφει JSON.
             Το --udl υποστηρίζει OLE DB UDL SQL Server και UTF-16/UTF-8.
             Για SQL Authentication μπορείς να ορίσεις AMVROSIA_SQL_PASSWORD.
+            --trust-server-certificate true: προσωρινή παράκαμψη TLS ταυτότητας.
+            Χρησιμοποίησε την παράκαμψη μόνο για γνωστά δοκιμαστικά περιβάλλοντα.
             Κανένας κωδικός δεν περνά ως command-line argument.
             Exit codes: 0 επιτυχία, 1 σφάλμα, 2 παράμετροι, 3 ακύρωση.
             """);

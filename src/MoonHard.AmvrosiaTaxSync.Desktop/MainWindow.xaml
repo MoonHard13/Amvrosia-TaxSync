@@ -222,6 +222,28 @@
                                     </StackPanel>
                                 </Grid>
 
+                                <!-- Η προσωρινή εξαίρεση ενεργοποιείται μόνο με ρητή επιβεβαίωση. -->
+                                <Border Background="{DynamicResource ElevatedBrush}"
+                                        BorderBrush="{DynamicResource BorderBrush}"
+                                        BorderThickness="1" CornerRadius="10"
+                                        Padding="15" Margin="0,22,0,0">
+                                    <StackPanel>
+                                        <TextBlock Text="ΑΣΦΑΛΕΙΑ ΣΥΝΔΕΣΗΣ TLS"
+                                                   FontWeight="Bold" FontSize="12"
+                                                   Foreground="{DynamicResource AccentBrush}"/>
+                                        <TextBlock Text="{Binding CertificateTrustDetails}"
+                                                   Foreground="{DynamicResource TextMutedBrush}"
+                                                   TextWrapping="Wrap" TextTrimming="None"
+                                                   Margin="0,8,0,12" FontSize="12"/>
+                                        <Button Content="{Binding CertificateTrustButtonText}"
+                                                HorizontalAlignment="Left"
+                                                AutomationProperties.Name="Εναλλαγή προσωρινής εξαίρεσης πιστοποιητικού TLS"
+                                                IsEnabled="{Binding IsIdle}"
+                                                ToolTip="Ctrl+Shift+C — Μόνο για εξουσιοδοτημένη δοκιμαστική σύνδεση"
+                                                Click="CertificateTrust_Click"/>
+                                    </StackPanel>
+                                </Border>
+
                                 <Border Height="1" Background="{DynamicResource BorderBrush}" Margin="0,22,0,20"/>
                                 <StackPanel Orientation="Horizontal">
                                     <Button Content="↗  Έλεγχος σύνδεσης" Click="TestConnection_Click"
