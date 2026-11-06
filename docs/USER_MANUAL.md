@@ -220,3 +220,35 @@ dotnet publish src/MoonHard.AmvrosiaTaxSync.Desktop -c Release -r win-x64 --self
 {% endhint %}
 
 Επίσημες πηγές: [Microsoft — Untrusted Certificate Authority](https://learn.microsoft.com/en-us/troubleshoot/sql/database-engine/connect/error-message-when-you-connect), [Certificate Requirements](https://learn.microsoft.com/en-us/sql/database-engine/configure-windows/certificate-requirements), [Certificate Management](https://learn.microsoft.com/en-us/sql/database-engine/configure-windows/manage-certificates).
+
+
+## 15. Προσωρινή εξαίρεση TLS για γνωστό δοκιμαστικό SQL Server
+
+**Προεπιλογή:** Encrypt=Mandatory και TrustServerCertificate=False. Η εφαρμογή απαιτεί έμπιστη αλυσίδα πιστοποιητικού.
+
+Αν διαθέτεις **εξουσιοδοτημένη και ελεγχόμενη δοκιμαστική** εγκατάσταση SQL Server με μη έμπιστο/self-signed πιστοποιητικό και δεν μπορεί να διορθωθεί άμεσα:
+
+1. Άνοιξε **Σύνδεση SQL**.
+2. Φόρτωσε UDL ή συμπλήρωσε χειροκίνητα τα στοιχεία του SQL Server.
+3. Στην ενότητα **ΑΣΦΑΛΕΙΑ ΣΥΝΔΕΣΗΣ TLS**, επίλεξε **Εξαίρεση πιστοποιητικού (μόνο δοκιμές)**.
+4. Διάβασε προσεκτικά τον κίνδυνο που εμφανίζεται και επέλεξε **Ναι** μόνο αν είσαι βέβαιος ότι συνδέεσαι στον σωστό γνωστό server.
+5. Πάτησε **Έλεγχος σύνδεσης (Ctrl+T)**.
+6. Μόλις τελειώσει ο έλεγχος, επίλεξε **Απενεργοποίηση εξαίρεσης TLS**.
+
+**Συντόμευση:** Ctrl+Shift+C (με επιβεβαίωση στην ενεργοποίηση).
+
+Η εξαίρεση **δεν αποθηκεύεται** στο settings.json, είναι off στην εκκίνηση και απενεργοποιείται όταν αλλάξει το όνομα Server ή εισαχθεί άλλο UDL. Τα logs καταγράφουν αν ενεργοποιήθηκε η εξαίρεση χωρίς κωδικούς. Ακόμη και όταν είναι ενεργή, παραμένει Encrypt=Mandatory: τα δεδομένα κρυπτογραφούνται αλλά η **ταυτότητα του SQL Server δεν επαληθεύεται**.
+
+### CLI
+
+Για ρητή, μεμονωμένη δοκιμή:
+
+    dotnet run --project src/MoonHard.AmvrosiaTaxSync.Cli -- test --udl "C:\Connections\amvrosia.udl" --trust-server-certificate true
+
+Όταν δεν δώσεις --trust-server-certificate true, η επαλήθευση πιστοποιητικού παραμένει ενεργή.
+
+{% hint style="danger" %}
+Η εξαίρεση εκθέτει τη σύνδεση σε κίνδυνο επιθέσεων ενδιάμεσου (MITM) και **δεν συνιστάται για παραγωγή ή μη έμπιστα δίκτυα**. Δεν διορθώνει την εμπιστοσύνη του server. Η προτεινόμενη μόνιμη λύση είναι έμπιστο TLS certificate και σωστή Root/Intermediate CA αλυσίδα.
+{% endhint %}
+
+Επίσημη τεκμηρίωση: [Microsoft — Certificate validation failure](https://learn.microsoft.com/en-us/troubleshoot/sql/database-engine/connect/certificate-validation-failure).
