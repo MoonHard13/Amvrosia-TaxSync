@@ -42,7 +42,7 @@ public static class Program
 
             if (parameters.TryGetValue("udl", out var udlPath))
             {
-                if (parameters.Keys.Any(key => key is not ("udl" or "trust-server-certificate" or "search" or "page" or "page-size")))
+                if (parameters.Keys.Any(key => key is not ("udl" or "trust-server-certificate" or "search" or "page" or "page-size" or "only-with-afm")))
                     throw new ArgumentException("Με --udl επιτρέπονται μόνο --search, --page, --page-size και --trust-server-certificate.");
 
                 var imported = await new UdlConnectionFileReader().LoadAsync(udlPath, cancellation.Token);
@@ -93,7 +93,8 @@ public static class Program
                 var query = new CustomerQuery(
                     parameters.GetValueOrDefault("search", ""),
                     int.Parse(parameters.GetValueOrDefault("page", "1")),
-                    int.Parse(parameters.GetValueOrDefault("page-size", "100")));
+                    int.Parse(parameters.GetValueOrDefault("page-size", "100")),
+                    bool.Parse(parameters.GetValueOrDefault("only-with-afm", "false")));
 
                 var reader = new CustomerReadService(loggerFactory.CreateLogger<CustomerReadService>());
                 var page = await reader.LoadAsync(options, query, cancellation.Token);
@@ -139,7 +140,7 @@ public static class Program
                 throw new ArgumentException("Οι επιλογές πρέπει να έχουν μορφή --όνομα τιμή.");
 
             var key = args[index][2..];
-            if (key is not ("server" or "database" or "auth" or "user" or "port" or "timeout" or "udl" or "trust-server-certificate" or "search" or "page" or "page-size"))
+            if (key is not ("server" or "database" or "auth" or "user" or "port" or "timeout" or "udl" or "trust-server-certificate" or "search" or "page" or "page-size" or "only-with-afm"))
                 throw new ArgumentException($"Άγνωστη παράμετρος: --{key}");
 
             if (!parsed.TryAdd(key, args[index + 1]))
@@ -157,13 +158,13 @@ public static class Program
               scan --server SERVER --database DB [--auth windows|sql] [--user USER] [--port PORT]
               test --udl "C:\Data\connection.udl"
               scan --udl "C:\Data\connection.udl"
-              customers --udl "C:\Data\connection.udl" [--search TERM] [--page 1] [--page-size 100]
+              customers --udl "C:\Data\connection.udl" [--search TERM] [--page 1] [--page-size 100] [--only-with-afm true]
               customers --server SERVER --database DB [--auth windows|sql] [--user USER] [--search TERM]
               test --udl "C:\Data\connection.udl" --trust-server-certificate false
 
             Η εντολή scan διαβάζει αποκλειστικά SQL metadata και επιστρέφει JSON.
             Η εντολή customers διαβάζει TblSnCustomer χωρίς αλλαγές και επιστρέφει μία σελίδα JSON.
-            Τα --search, --page, --page-size χρησιμοποιούνται μόνο με customers (10-500 εγγραφές).
+            Τα --search, --page, --page-size και --only-with-afm χρησιμοποιούνται με customers.
             Το --udl υποστηρίζει OLE DB UDL SQL Server και UTF-16/UTF-8.
             Για SQL Authentication μπορείς να ορίσεις AMVROSIA_SQL_PASSWORD.
             Προεπιλογή: Encrypt=Mandatory, TrustServerCertificate=True.
