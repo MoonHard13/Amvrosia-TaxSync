@@ -23,6 +23,27 @@ public partial class MainWindow : Window
     private void ExplorerPage_Click(object sender, RoutedEventArgs e)
         => _viewModel.PageIndex = 1;
 
+    private async void CustomersPage_Click(object sender, RoutedEventArgs e)
+    {
+        _viewModel.PageIndex = 2;
+        await _viewModel.LoadCustomersAsync(SqlPassword.Password);
+    }
+
+    private async void LoadCustomers_Click(object sender, RoutedEventArgs e)
+        => await _viewModel.LoadCustomersAsync(SqlPassword.Password);
+
+    private async void PreviousCustomers_Click(object sender, RoutedEventArgs e)
+    {
+        if (_viewModel.Customers.HasPrevious)
+            await _viewModel.LoadCustomersAsync(SqlPassword.Password, _viewModel.Customers.Page - 1);
+    }
+
+    private async void NextCustomers_Click(object sender, RoutedEventArgs e)
+    {
+        if (_viewModel.Customers.HasNext)
+            await _viewModel.LoadCustomersAsync(SqlPassword.Password, _viewModel.Customers.Page + 1);
+    }
+
     private void Theme_Click(object sender, RoutedEventArgs e)
         => _viewModel.ToggleTheme();
 
@@ -138,6 +159,17 @@ public partial class MainWindow : Window
             e.Handled = true;
             _viewModel.PageIndex = 1;
         }
+        else if (Keyboard.Modifiers == ModifierKeys.Control && e.Key == Key.D3)
+        {
+            e.Handled = true;
+            _viewModel.PageIndex = 2;
+            await _viewModel.LoadCustomersAsync(SqlPassword.Password);
+        }
+        else if (e.Key == Key.Enter && ReferenceEquals(e.OriginalSource, CustomerSearchBox))
+        {
+            e.Handled = true;
+            await _viewModel.LoadCustomersAsync(SqlPassword.Password);
+        }
         else if (Keyboard.Modifiers == ModifierKeys.Control && e.Key == Key.T)
         {
             e.Handled = true;
@@ -155,6 +187,11 @@ public partial class MainWindow : Window
             {
                 SchemaSearchBox.Focus();
                 SchemaSearchBox.SelectAll();
+            }
+            else if (_viewModel.IsCustomersPage)
+            {
+                CustomerSearchBox.Focus();
+                CustomerSearchBox.SelectAll();
             }
             else
             {
