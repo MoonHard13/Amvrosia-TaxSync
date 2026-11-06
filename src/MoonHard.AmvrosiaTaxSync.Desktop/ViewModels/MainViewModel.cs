@@ -1,8 +1,11 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.IO;
 using System.Runtime.CompilerServices;
+using System.Windows.Data;
 using Microsoft.Extensions.Logging;
 using MoonHard.AmvrosiaTaxSync.Application.Contracts;
+using MoonHard.AmvrosiaTaxSync.Application.Services;
 using MoonHard.AmvrosiaTaxSync.Desktop.Services;
 using MoonHard.AmvrosiaTaxSync.Domain.Models;
 
@@ -11,7 +14,9 @@ namespace MoonHard.AmvrosiaTaxSync.Desktop.ViewModels;
 public sealed class MainViewModel : INotifyPropertyChanged
 {
     private readonly ISqlSchemaService _service;
+    private readonly UdlConnectionFileReader _udlReader;
     private readonly ConnectionPreferencesStore _store;
+    private readonly ThemeService _themes;
     private readonly ILogger<MainViewModel> _logger;
     private CancellationTokenSource? _cancellation;
     private string _server = "";
@@ -21,17 +26,26 @@ public sealed class MainViewModel : INotifyPropertyChanged
     private string _username = "";
     private bool _windowsAuthentication = true;
     private bool _isBusy;
-    private string _status = "Συμπλήρωσε στοιχεία σύνδεσης για να ξεκινήσεις.";
+    private string _status = "Συμπλήρωσε τα στοιχεία SQL ή φόρτωσε ένα αρχείο UDL.";
     private SchemaObject? _selectedObject;
+    private string _schemaSearch = "";
+    private string _udlFileName = "Δεν έχει επιλεγεί αρχείο";
+    private string _theme = "Dark";
+    private int _pageIndex;
 
     public MainViewModel(
         ISqlSchemaService service,
+        UdlConnectionFileReader udlReader,
         ConnectionPreferencesStore store,
+        ThemeService themes,
         ILogger<MainViewModel> logger)
     {
         _service = service;
+        _udlReader = udlReader;
         _store = store;
+        _themes = themes;
         _logger = logger;
+
         var preferences = store.Load();
         _server = preferences.Server;
         _database = preferences.Database;
@@ -39,18 +53,64 @@ public sealed class MainViewModel : INotifyPropertyChanged
         _timeout = preferences.TimeoutSeconds.ToString();
         _windowsAuthentication = preferences.WindowsAuthentication;
         _username = preferences.Username;
+        _theme = preferences.Theme == "Light" ? "Light" : "Dark";
+
+        SchemaView = CollectionViewSource.GetDefaultView(Objects);
+        SchemaView.Filter = item => item is SchemaObject schema &&
+            (string.IsNullOrWhiteSpace(_schemaSearch) ||
+             schema.QualifiedName.Contains(_schemaSearch, StringComparison.OrdinalIgnoreCase) ||
+             schema.Kind.Contains(_schemaSearch, StringComparison.OrdinalIgnoreCase));
+
+        _themes.Apply(_theme);
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
     public ObservableCollection<SchemaObject> Objects { get; } = [];
     public ObservableCollection<SchemaColumn> SelectedColumns { get; } = [];
+    public ICollectionView SchemaView { get; }
 
     public string Server { get => _server; set => Set(ref _server, value); }
     public string Database { get => _database; set => Set(ref _database, value); }
     public string Port { get => _port; set => Set(ref _port, value); }
     public string Timeout { get => _timeout; set => Set(ref _timeout, value); }
     public string Username { get => _username; set => Set(ref _username, value); }
+
+    public string SchemaSearch
+    {
+        get => _schemaSearch;
+        set
+        {
+            if (Set(ref _schemaSearch, value))
+                SchemaView.Refresh();
+        }
+    }
+
+    public string UdlFileName
+    {
+        get => _udlFileName;
+        private set => Set(ref _udlFileName, value);
+    }
+
+    public string ThemeButtonText => _theme == "Dark" ? "☀  Light mode" : "☾  Dark mode";
+
+    public int PageIndex
+    {
+        get => _pageIndex;
+        set
+        {
+            if (value is < 0 or > 1 || !Set(ref _pageIndex, value))
+                return;
+
+            Changed(nameof(IsConnectionPage));
+            Changed(nameof(IsExplorerPage));
+            Changed(nameof(PageTitle));
+        }
+    }
+
+    public bool IsConnectionPage => PageIndex == 0;
+    public bool IsExplorerPage => PageIndex == 1;
+    public string PageTitle => IsConnectionPage ? "Σύνδεση SQL Server" : "Schema Explorer";
 
     public bool WindowsAuthentication
     {
@@ -82,6 +142,11 @@ public sealed class MainViewModel : INotifyPropertyChanged
         private set => Set(ref _status, value);
     }
 
+    public int ObjectCount => Objects.Count;
+    public string SelectedObjectLabel => SelectedObject is null
+        ? "Επίλεξε αντικείμενο από τη λίστα"
+        : $"{SelectedObject.QualifiedName} • {SelectedObject.ColumnCount} πεδία";
+
     public SchemaObject? SelectedObject
     {
         get => _selectedObject;
@@ -91,12 +156,22 @@ public sealed class MainViewModel : INotifyPropertyChanged
                 return;
 
             SelectedColumns.Clear();
-            if (value is null)
-                return;
+            if (value is not null)
+            {
+                foreach (var column in value.Columns)
+                    SelectedColumns.Add(column);
+            }
 
-            foreach (var column in value.Columns)
-                SelectedColumns.Add(column);
+            Changed(nameof(SelectedObjectLabel));
         }
+    }
+
+    public void ToggleTheme()
+    {
+        _theme = _theme == "Dark" ? "Light" : "Dark";
+        _themes.Apply(_theme);
+        Changed(nameof(ThemeButtonText));
+        SavePreferences();
     }
 
     public Task TestConnectionAsync(string password)
@@ -107,6 +182,56 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
     public void Cancel() => _cancellation?.Cancel();
 
+    public async Task<string?> ImportUdlAsync(string path)
+    {
+        if (IsBusy)
+            return null;
+
+        IsBusy = true;
+        using var cancellation = new CancellationTokenSource();
+        _cancellation = cancellation;
+        try
+        {
+            Status = "Διαβάζονται οι ρυθμίσεις UDL...";
+            var imported = await _udlReader.LoadAsync(path, cancellation.Token);
+            Server = imported.Options.Server;
+            Database = imported.Options.Database;
+            Port = imported.Options.Port.ToString();
+            Timeout = imported.Options.TimeoutSeconds.ToString();
+            Username = imported.Options.Username ?? "";
+            WindowsAuthentication = imported.Options.WindowsAuthentication;
+            UdlFileName = Path.GetFileName(path);
+            Status = imported.ContainsPassword
+                ? "Το UDL φορτώθηκε. Βρέθηκε SQL password στο αρχείο — μην το κοινοποιείς."
+                : "Το UDL φορτώθηκε. Έλεγξε τα στοιχεία και πάτησε Έλεγχος σύνδεσης.";
+            _logger.LogInformation("UDL configuration imported without storing source path or credentials.");
+            SavePreferences();
+            return imported.Options.Password ?? "";
+        }
+        catch (OperationCanceledException)
+        {
+            Status = "Η εισαγωγή UDL ακυρώθηκε.";
+            _logger.LogInformation("UDL import cancelled.");
+        }
+        catch (Exception ex) when (ex is ArgumentException or FormatException or NotSupportedException)
+        {
+            Status = ex.Message;
+            _logger.LogWarning("UDL import failed: {ErrorType}", ex.GetType().Name);
+        }
+        catch (Exception ex)
+        {
+            Status = "Δεν ήταν δυνατή η ανάγνωση του αρχείου UDL.";
+            _logger.LogWarning("UDL file reading failed: {ErrorType}", ex.GetType().Name);
+        }
+        finally
+        {
+            _cancellation = null;
+            IsBusy = false;
+        }
+
+        return null;
+    }
+
     public void SavePreferences()
     {
         try
@@ -114,7 +239,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
             _store.Save(new ConnectionPreferences(
                 Server, Database, WindowsAuthentication, Username,
                 int.TryParse(Port, out var port) ? port : 0,
-                int.TryParse(Timeout, out var timeout) ? timeout : 15));
+                int.TryParse(Timeout, out var timeout) ? timeout : 15,
+                _theme));
         }
         catch (Exception ex)
         {
@@ -141,7 +267,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
             var options = new SqlConnectionOptions(
                 Server, Database, WindowsAuthentication, Username, password, port, timeout);
 
-            Status = inspect ? "Γίνεται read-only επιθεώρηση..." : "Έλεγχος σύνδεσης...";
+            Status = inspect ? "Γίνεται read-only επιθεώρηση schema..." : "Δοκιμάζεται η σύνδεση SQL...";
             if (inspect)
             {
                 var schema = await _service.InspectAsync(options, cancellation.Token);
@@ -149,15 +275,19 @@ public sealed class MainViewModel : INotifyPropertyChanged
                 SelectedObject = null;
                 foreach (var item in schema)
                     Objects.Add(item);
-                Status = $"Ολοκληρώθηκε η επιθεώρηση: {schema.Count} αντικείμενα.";
+                Changed(nameof(ObjectCount));
+                SchemaView.Refresh();
+                PageIndex = 1;
+                Status = $"Η επιθεώρηση ολοκληρώθηκε: {schema.Count} SQL αντικείμενα.";
                 _logger.LogInformation("Schema view refreshed with {Count} objects.", schema.Count);
             }
             else
             {
                 var database = await _service.TestConnectionAsync(options, cancellation.Token);
-                Status = $"Επιτυχής σύνδεση: {database.Name} • SQL Server {database.ServerVersion}.";
-                _logger.LogInformation("Connection test succeeded.");
+                Status = $"Επιτυχής σύνδεση με {database.Name} (SQL Server {database.ServerVersion}).";
+                _logger.LogInformation("SQL test connection succeeded.");
             }
+
             SavePreferences();
         }
         catch (OperationCanceledException)
@@ -165,9 +295,15 @@ public sealed class MainViewModel : INotifyPropertyChanged
             Status = "Η διαδικασία ακυρώθηκε.";
             _logger.LogInformation("SQL operation canceled by user.");
         }
+        catch (Exception ex) when (ex is ArgumentException or FormatException)
+        {
+            Status = ex.Message;
+            _logger.LogWarning("Invalid SQL connection settings: {ErrorType}.", ex.GetType().Name);
+        }
         catch (Exception ex)
         {
-            Status = $"Αποτυχία: {ex.Message}";
+            // Δεν εμφανίζουμε ολόκληρα connection strings ή ευαίσθητες λεπτομέρειες SQL.
+            Status = $"Η λειτουργία SQL απέτυχε ({ex.GetType().Name}). Έλεγξε σύνδεση, TLS και δικαιώματα.";
             _logger.LogWarning("SQL operation failed: {ErrorType}.", ex.GetType().Name);
         }
         finally

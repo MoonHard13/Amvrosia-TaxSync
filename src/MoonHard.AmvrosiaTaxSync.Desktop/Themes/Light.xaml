@@ -1,0 +1,25 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <SolidColorBrush x:Key="AppBackground" Color="#F3F6FB"/>
+    <SolidColorBrush x:Key="SidebarBackground" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="SurfaceBrush" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="ElevatedBrush" Color="#F4F7FC"/>
+    <SolidColorBrush x:Key="InputBrush" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="BorderBrush" Color="#CCD6E4"/>
+    <SolidColorBrush x:Key="TextPrimaryBrush" Color="#17263A"/>
+    <SolidColorBrush x:Key="TextMutedBrush" Color="#53657A"/>
+    <SolidColorBrush x:Key="AccentBrush" Color="#1459A1"/>
+    <SolidColorBrush x:Key="AccentTextBrush" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="SecondaryButtonBrush" Color="#E4EDF8"/>
+    <SolidColorBrush x:Key="SecondaryButtonTextBrush" Color="#19436B"/>
+    <SolidColorBrush x:Key="DisabledBrush" Color="#E7EAF0"/>
+    <SolidColorBrush x:Key="DisabledTextBrush" Color="#69798C"/>
+    <SolidColorBrush x:Key="ActiveNavBrush" Color="#DCEBFA"/>
+    <SolidColorBrush x:Key="GridAltBrush" Color="#F5F8FC"/>
+    <SolidColorBrush x:Key="GridHeaderBrush" Color="#E9F0F8"/>
+    <SolidColorBrush x:Key="GridSelectionBrush" Color="#D2E7FB"/>
+    <SolidColorBrush x:Key="GridSelectionTextBrush" Color="#103B68"/>
+    <SolidColorBrush x:Key="SuccessBrush" Color="#136C43"/>
+    <SolidColorBrush x:Key="FocusBrush" Color="#0E67C0"/>
+    <SolidColorBrush x:Key="HoverBrush" Color="#D3E3F5"/>
+</ResourceDictionary>

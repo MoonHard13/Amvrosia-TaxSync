@@ -2,6 +2,7 @@ using System.Windows;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using MoonHard.AmvrosiaTaxSync.Application.Contracts;
+using MoonHard.AmvrosiaTaxSync.Application.Services;
 using MoonHard.AmvrosiaTaxSync.Desktop.Logging;
 using MoonHard.AmvrosiaTaxSync.Desktop.Services;
 using MoonHard.AmvrosiaTaxSync.Desktop.ViewModels;
@@ -24,6 +25,8 @@ public partial class App : System.Windows.Application
         });
         registrations.AddSingleton<ISqlSchemaService, SqlSchemaService>();
         registrations.AddSingleton<ConnectionPreferencesStore>();
+        registrations.AddSingleton<UdlConnectionFileReader>();
+        registrations.AddSingleton<ThemeService>();
         registrations.AddTransient<MainViewModel>();
         registrations.AddTransient<MainWindow>();
 
