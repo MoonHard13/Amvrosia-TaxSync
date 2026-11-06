@@ -5,7 +5,7 @@
     <UseWPF>true</UseWPF>
     <OutputType>WinExe</OutputType>
     <AssemblyName>AmvrosiaTaxSync</AssemblyName>
-    <Version>0.2.0</Version>
+    <Version>0.3.0</Version>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../MoonHard.AmvrosiaTaxSync.Infrastructure.SqlServer/MoonHard.AmvrosiaTaxSync.Infrastructure.SqlServer.csproj" />

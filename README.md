@@ -66,3 +66,16 @@ Feature branch → Pull Request → GitHub Actions → review → merge. Δοκ�
 Το WPF και το CLI χρησιμοποιούν `Encrypt=Mandatory;TrustServerCertificate=True` χωρίς ανάγκη ενεργοποίησης εξαίρεσης. Το GUI προσφέρει επιλογή απενεργοποίησης της εξαίρεσης, ενώ το CLI δέχεται `--trust-server-certificate false` για αυστηρή επαλήθευση.
 
 Η κρυπτογράφηση παραμένει ενεργή, όμως η ταυτότητα του server δεν επαληθεύεται με την προεπιλογή. Συνιστάται έγκυρο TLS certificate και αυστηρή επαλήθευση σε παραγωγικά περιβάλλοντα.
+
+
+### Phase 2 — Πελάτες Αμβροσίας (v0.3.0)
+
+Η εφαρμογή διαβάζει σελίδες 100 εγγραφών από τον πραγματικό πίνακα **TblSnCustomer** και παρουσιάζει **CustCode, CustTitle, CustName, CustAFM, CustInactive**, στατιστικά με / χωρίς ΑΦΜ και τοπική εγκυρότητα ελληνικού ΑΦΜ. Υπάρχει αναζήτηση (SQL parameters), πλοήγηση με Ctrl+3, read-only λειτουργία και υποστήριξη CLI.
+
+Παράδειγμα:
+
+~~~powershell
+dotnet run --project src/MoonHard.AmvrosiaTaxSync.Cli -- customers --udl "C:\Connections\amvrosia.udl" --page 1 --page-size 100
+~~~
+
+Η εφαρμογή δεν συνδέεται ακόμη με ΓΓΠΣ/ΑΑΔΕ ούτε γράφει στη βάση. Για αναλυτικές οδηγίες δες το ελληνικό docs/USER_MANUAL.md. Τα παραγόμενα JSON δεδομένα περιέχουν στοιχεία πελατών και δεν πρέπει να δημοσιεύονται.

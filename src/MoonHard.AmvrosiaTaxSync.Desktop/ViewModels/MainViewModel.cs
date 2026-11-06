@@ -16,6 +16,7 @@ namespace MoonHard.AmvrosiaTaxSync.Desktop.ViewModels;
 public sealed class MainViewModel : INotifyPropertyChanged
 {
     private readonly ISqlSchemaService _service;
+    private readonly ICustomerReadService _customersService;
     private readonly UdlConnectionFileReader _udlReader;
     private readonly ConnectionPreferencesStore _store;
     private readonly ThemeService _themes;
@@ -42,12 +43,14 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
     public MainViewModel(
         ISqlSchemaService service,
+        ICustomerReadService customersService,
         UdlConnectionFileReader udlReader,
         ConnectionPreferencesStore store,
         ThemeService themes,
         ILogger<MainViewModel> logger)
     {
         _service = service;
+        _customersService = customersService;
         _udlReader = udlReader;
         _store = store;
         _themes = themes;
@@ -72,6 +75,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
+
+    public CustomerListViewModel Customers { get; } = new();
 
     public ObservableCollection<SchemaObject> Objects { get; } = [];
     public ObservableCollection<SchemaColumn> SelectedColumns { get; } = [];
@@ -113,18 +118,25 @@ public sealed class MainViewModel : INotifyPropertyChanged
         get => _pageIndex;
         set
         {
-            if (value is < 0 or > 1 || !Set(ref _pageIndex, value))
+            if (value is < 0 or > 2 || !Set(ref _pageIndex, value))
                 return;
 
             Changed(nameof(IsConnectionPage));
             Changed(nameof(IsExplorerPage));
+            Changed(nameof(IsCustomersPage));
             Changed(nameof(PageTitle));
         }
     }
 
     public bool IsConnectionPage => PageIndex == 0;
     public bool IsExplorerPage => PageIndex == 1;
-    public string PageTitle => IsConnectionPage ? "Σύνδεση SQL Server" : "Schema Explorer";
+    public bool IsCustomersPage => PageIndex == 2;
+    public string PageTitle => PageIndex switch
+    {
+        0 => "Σύνδεση SQL Server",
+        1 => "Schema Explorer",
+        _ => "Πελάτες Αμβροσίας"
+    };
 
     public bool WindowsAuthentication
     {
@@ -262,6 +274,71 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
     public Task InspectSchemaAsync(string password)
         => ExecuteAsync(password, inspect: true);
+
+    public async Task LoadCustomersAsync(string password, int requestedPage = 1)
+    {
+        if (IsBusy)
+            return;
+
+        IsBusy = true;
+        ClearSqlFailure();
+        using var cancellation = new CancellationTokenSource();
+        _cancellation = cancellation;
+
+        try
+        {
+            if (!int.TryParse(Port, out var port))
+                throw new ArgumentException("Μη έγκυρος αριθμός port.");
+            if (!int.TryParse(Timeout, out var timeout))
+                throw new ArgumentException("Μη έγκυρο connection timeout.");
+
+            var options = new SqlConnectionOptions(
+                Server, Database, WindowsAuthentication, Username, password, port, timeout,
+                TrustServerCertificate);
+
+            var query = new CustomerQuery(Customers.Search, requestedPage, Customers.PageSize);
+            Status = "Ανακτώνται οι πελάτες της Αμβροσίας (read-only)...";
+            var page = await _customersService.LoadAsync(options, query, cancellation.Token);
+            Customers.SetPage(page);
+            PageIndex = 2;
+            Status = $"Φορτώθηκαν {page.Customers.Count} πελάτες από {page.MatchedCount:N0} αποτελέσματα.";
+            _logger.LogInformation("Customer page displayed: {Page}, Rows={Rows}.",
+                page.Page, page.Customers.Count);
+            SavePreferences();
+        }
+        catch (OperationCanceledException)
+        {
+            Status = "Η ανάγνωση πελατών ακυρώθηκε.";
+            _logger.LogInformation("Customer loading cancelled.");
+        }
+        catch (Exception ex) when (ex is ArgumentException or FormatException or InvalidOperationException)
+        {
+            Status = ex.Message;
+            _logger.LogWarning("Customer query validation failed: {Type}.", ex.GetType().Name);
+        }
+        catch (SqlException ex)
+        {
+            var diagnostic = SqlConnectionErrorFormatter.Diagnose(ex);
+            FailureTitle = diagnostic.Title;
+            FailureGuidance = diagnostic.Suggestion;
+            FailureTechnical = diagnostic.TechnicalDetails;
+            HasSqlFailure = true;
+            Changed(nameof(CopyableDiagnostic));
+            Status = $"Αποτυχία ανάγνωσης πελατών (SQL #{diagnostic.Number}).";
+            _logger.LogWarning("Customer SQL query failed: Number={Number}, State={State}, ConnectionId={ConnectionId}.",
+                diagnostic.Number, diagnostic.State, diagnostic.ConnectionId);
+        }
+        catch (Exception ex)
+        {
+            Status = $"Δεν ολοκληρώθηκε η ανάγνωση πελατών ({ex.GetType().Name}).";
+            _logger.LogWarning("Customer query failed: {Type}.", ex.GetType().Name);
+        }
+        finally
+        {
+            _cancellation = null;
+            IsBusy = false;
+        }
+    }
 
     public void Cancel() => _cancellation?.Cancel();
 
