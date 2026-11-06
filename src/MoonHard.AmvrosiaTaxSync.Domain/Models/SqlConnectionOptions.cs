@@ -8,7 +8,7 @@ public sealed record SqlConnectionOptions(
     string? Password,
     int Port = 0,
     int TimeoutSeconds = 15,
-    bool TrustServerCertificate = false)
+    bool TrustServerCertificate = true)
 {
     public void Validate()
     {
