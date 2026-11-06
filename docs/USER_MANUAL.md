@@ -188,6 +188,7 @@ dotnet publish src/MoonHard.AmvrosiaTaxSync.Desktop -c Release -r win-x64 --self
 | 26 / 53 / 10060 / 10061 | Server/instance ή δικτύωση | Server, port, firewall, SQL Browser |
 | -2 | Timeout | Δίκτυο, χρόνο απόκρισης, ρύθμιση timeout |
 | 233 | Κλείσιμο σύνδεσης από τον server | SQL error logs, protocols, authentication |
+| -2146893019 / 0x80090325 | Μη έμπιστη αρχή πιστοποίησης TLS | Έγκυρη αλυσίδα Root/Intermediate CA, SAN/DNS hostname, SQL Server TLS certificate |
 | 0 με ένδειξη TLS / SSL / certificate | Πιστοποιητικό ή TLS | Certificate trust chain, server name, λήξη certificate |
 
 {% hint style="warning" %}
@@ -203,3 +204,19 @@ dotnet publish src/MoonHard.AmvrosiaTaxSync.Desktop -c Release -r win-x64 --self
 Τα tooltips των κουμπιών ακολουθούν τη χρωματική παλέτα του προγράμματος και έχουν ρητά καθορισμένα χρώματα κειμένου, φόντου και περιγράμματος. Έλεγξε οπτικά hover/keyboard focus σε Light και Dark Mode.
 
 Τα SQL passwords, τα UDL περιεχόμενα και τα πλήρη SQL exceptions **δεν** συμπεριλαμβάνονται στα κοινά logs ή στο κείμενο που αντιγράφει το κουμπί **Αντιγραφή διάγνωσης**.
+
+## 14. Ειδική αντιμετώπιση SQL Error -2146893019
+
+Το σφάλμα `-2146893019` (`0x80090325`) υποδεικνύει ότι η TLS αλυσίδα πιστοποιητικών που παρουσίασε ο SQL Server δεν θεωρείται έμπιστη από τον Windows client. **Δεν αποδεικνύει σφάλμα username, password ή SQL permissions.**
+
+1. Στον SQL Server άνοιξε **SQL Server Configuration Manager → SQL Server Network Configuration → Protocols for [instance] → Properties → Certificate**.
+2. Επιβεβαίωσε ποιο πιστοποιητικό χρησιμοποιεί το instance. Έλεγξε validity, **Server Authentication EKU** και ότι το **Subject Alternative Name (SAN)** περιλαμβάνει το DNS όνομα με το οποίο συνδέεται το Amvrosia TaxSync.
+3. Σε περιβάλλον παραγωγής προτίμησε πιστοποιητικό SQL Server από έμπιστη εταιρική ή δημόσια CA, όχι το αυτόματα δημιουργημένο self-signed certificate.
+4. Αν έχεις εσωτερική CA, εγκατάστησε **μόνο** το επαληθευμένο root CA certificate (και την απαιτούμενη intermediate chain) στα κατάλληλα Windows certificate stores του client, μέσω IT/διαχειριστή. Πριν από την εισαγωγή έλεγξε την προέλευσή του από αξιόπιστο κανάλι.
+5. Μετά την εγκεκριμένη αλλαγή πιστοποιητικού στο instance μπορεί να χρειαστεί επανεκκίνηση της υπηρεσίας SQL Server, σε προγραμματισμένο maintenance window. Έλεγξε ξανά με **Ctrl+T**.
+
+{% hint style="danger" %}
+Μην κάνεις import τυχαίου πιστοποιητικού στα Trusted Root Certification Authorities και μην ρυθμίσεις `TrustServerCertificate=True` σε παραγωγικό σύστημα μόνο για να περάσει η σύνδεση. Η παράκαμψη πιστοποιητικού μπορεί να αποκρύψει παραπλάνηση του server.
+{% endhint %}
+
+Επίσημες πηγές: [Microsoft — Untrusted Certificate Authority](https://learn.microsoft.com/en-us/troubleshoot/sql/database-engine/connect/error-message-when-you-connect), [Certificate Requirements](https://learn.microsoft.com/en-us/sql/database-engine/configure-windows/certificate-requirements), [Certificate Management](https://learn.microsoft.com/en-us/sql/database-engine/configure-windows/manage-certificates).

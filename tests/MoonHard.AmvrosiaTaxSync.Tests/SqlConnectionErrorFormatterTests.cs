@@ -30,6 +30,25 @@ public sealed class SqlConnectionErrorFormatterTests
     }
 
     [TestMethod]
+    public void UntrustedCertificateAuthority_Code_ProvidesSpecificGuidance()
+    {
+        var connectionId = Guid.NewGuid();
+        const string unsafeRawMessage = "Password=secret-value; Data Source=private-server";
+
+        var result = SqlConnectionErrorFormatter.Classify(
+            -2146893019, state: 0, severity: 20,
+            connectionId: connectionId, providerMessage: unsafeRawMessage);
+
+        StringAssert.Contains(result.Title, "πιστοποιητικού");
+        StringAssert.Contains(result.Suggestion, "CA");
+        StringAssert.Contains(result.Suggestion, "SAN");
+        StringAssert.Contains(result.TechnicalDetails, "-2146893019");
+        StringAssert.Contains(result.TechnicalDetails, connectionId.ToString("D"));
+        Assert.IsFalse(result.Suggestion.Contains("secret-value", StringComparison.Ordinal));
+        Assert.IsFalse(result.TechnicalDetails.Contains("private-server", StringComparison.Ordinal));
+    }
+
+    [TestMethod]
     public void UnknownCode_IncludesSafeTechnicalNumbers()
     {
         var id = Guid.NewGuid();
