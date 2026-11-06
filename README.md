@@ -1,49 +1,53 @@
 # Amvrosia TaxSync by MoonHard
 
-Εφαρμογή Windows σε **C# / .NET 10 LTS / WPF** για ελεγχόμενο έλεγχο και μελλοντικό συγχρονισμό στοιχείων μητρώου επιχειρήσεων μεταξύ **Amvrosia ERP (Sunsoft)** και της εξουσιοδοτημένης υπηρεσίας **ΑΑΔΕ / ΓΓΠΣ**.
+Επαγγελματική εφαρμογή Windows σε **C# / .NET 10 LTS / WPF** για τη μελλοντική επαλήθευση φορολογικών στοιχείων επιχειρήσεων στο **Amvrosia ERP** μέσω ΑΑΔΕ/ΓΓΠΣ.
 
-> Ανεξάρτητο εργαλείο της MoonHard. Δεν αποτελεί επίσημο προϊόν της Sunsoft ή της ΑΑΔΕ.
+> Ανεξάρτητο προϊόν της MoonHard — όχι επίσημο λογισμικό Sunsoft ή ΑΑΔΕ.
 
-## Κατάσταση ανάπτυξης
+## Υλοποιημένες λειτουργίες (v0.2.0)
 
-**Phase 1 — Foundation (v0.1.0):** Αρχική WPF οθόνη, Windows/SQL Authentication, Test Connection, read-only αναγνώριση SQL πινάκων/views/columns/PK/FK, τοπικές μη ευαίσθητες ρυθμίσεις, JSONL τεχνικά logs, CLI και unit tests.
+- Μοντέρνο WPF workspace με sidebar, ευανάγνωστα controls, **Light/Dark mode** και αποθήκευση επιλογής θέματος.
+- **Φόρτωση UDL** SQL Server (`.udl`, UTF-16/UTF-8), αναγνώριση server, database, authentication, username, port, timeout και προσωρινή χρήση password.
+- Χειροκίνητη σύνδεση με Windows ή SQL Authentication.
+- Test Connection με TLS encryption / server certificate validation.
+- **Read-only Schema Explorer** με tables, views, columns, PK/FK και ζωντανή αναζήτηση.
+- Ακύρωση μεγάλων SQL εργασιών, CLI με `--udl`, τεχνικά logs, unit tests και Windows CI.
 
-**Δεν έχουν υλοποιηθεί ακόμα:** σύνδεση με ΑΑΔΕ, ανάκτηση πελατών Amvrosia, field mappings, compare engine και ενημέρωση δεδομένων. Δεν υπάρχει SQL UPDATE/DELETE/INSERT.
+**Δεν έχουν ακόμη υλοποιηθεί:** ο πραγματικός Amvrosia customer adapter, AADE SOAP, comparison engine, εγκεκριμένα updates. Δεν εκτελούνται SQL data writes.
 
-## Προϋποθέσεις
+## Οδηγίες έναρξης
 
-- Windows 10/11, .NET 10 SDK και πρόσβαση σε SQL Server.
-- Δικαίωμα ανάγνωσης schema metadata στη συγκεκριμένη βάση.
-- SQL Server με αξιόπιστο TLS certificate. Το πρόγραμμα απαιτεί encryption και δεν παρακάμπτει την πιστοποίηση του server.
-
-## Εκκίνηση (PowerShell)
-
-    git clone https://github.com/MoonHard13/Amvrosia-TaxSync.git
-    cd Amvrosia-TaxSync
-    dotnet restore AmvrosiaTaxSync.slnx
-    dotnet build AmvrosiaTaxSync.slnx -c Release
-    dotnet test tests/MoonHard.AmvrosiaTaxSync.Tests/MoonHard.AmvrosiaTaxSync.Tests.csproj -c Release
-    dotnet run --project src/MoonHard.AmvrosiaTaxSync.Desktop
+```powershell
+git clone https://github.com/MoonHard13/Amvrosia-TaxSync.git
+cd Amvrosia-TaxSync
+dotnet restore AmvrosiaTaxSync.slnx
+dotnet build AmvrosiaTaxSync.slnx -c Release
+dotnet test tests/MoonHard.AmvrosiaTaxSync.Tests/MoonHard.AmvrosiaTaxSync.Tests.csproj -c Release
+dotnet run --project src/MoonHard.AmvrosiaTaxSync.Desktop
+```
 
 ## CLI
 
-    dotnet run --project src/MoonHard.AmvrosiaTaxSync.Cli -- test --server localhost --database master
-    dotnet run --project src/MoonHard.AmvrosiaTaxSync.Cli -- scan --server localhost --database master
+```powershell
+dotnet run --project src/MoonHard.AmvrosiaTaxSync.Cli -- test --udl "C:\Connections\amvrosia.udl"
+dotnet run --project src/MoonHard.AmvrosiaTaxSync.Cli -- scan --udl "C:\Connections\amvrosia.udl"
+dotnet run --project src/MoonHard.AmvrosiaTaxSync.Cli -- test --server localhost --database master
+```
 
-Για SQL Authentication: χρησιμοποίησε `--auth sql --user username` και όρισε προσωρινά την μεταβλητή περιβάλλοντος `AMVROSIA_SQL_PASSWORD`. Μην εισάγεις ποτέ κωδικούς σε command-line arguments ή στο GitHub.
+Για SQL Authentication χωρίς password μέσα στο UDL, μπορεί να χρησιμοποιηθεί προσωρινά η μεταβλητή περιβάλλοντος `AMVROSIA_SQL_PASSWORD`. Δεν προσφέρουμε password command-line argument.
 
-## Documentation
+## Προϋποθέσεις
 
-[Ελληνικό User Manual](docs/USER_MANUAL.md)
+Windows 10/11, .NET 10 SDK και SQL Server με αξιόπιστο TLS certificate. Για την επιθεώρηση απαιτούνται δικαιώματα ανάγνωσης SQL metadata.
 
-## Security
+## Ασφάλεια
 
-- Read-only SQL metadata operations, χωρίς μεταβολή σε business data.
-- Ο SQL password δεν αποθηκεύεται και δεν καταγράφεται στα logs.
-- Το connection string επιβάλλει TLS και certificate validation.
-- Τα μη ευαίσθητα preferences αποθηκεύονται στο LocalAppData.
-- Μη χρησιμοποιείς production credentials σε tests ή public issues.
+{% hint style="warning" %}
+Ορισμένα UDL αρχεία περιέχουν password **σε απλό κείμενο**. Χρησιμοποίησε μόνο εξουσιοδοτημένα αρχεία, μην τα ανεβάζεις στο Git και μην τα επισυνάπτεις σε issues. Η εφαρμογή δεν αποθηκεύει το password στα preferences/logs ούτε απενεργοποιεί το certificate validation. Οι ρυθμίσεις TLS ή άλλες παλιές επιλογές provider από το UDL δεν μεταφέρονται αυτούσιες στον SqlClient.
+{% endhint %}
 
-## Contributing
+[Αναλυτικό ελληνικό User Manual](docs/USER_MANUAL.md)
 
-Η εργασία γίνεται σε feature branches με Pull Requests και CI build/test checks πριν από merge.
+## Διαδικασία ανάπτυξης
+
+Feature branch → Pull Request → GitHub Actions → review → merge. Δοκιμές GUI και SQL authentication σε πραγματικά Windows χρειάζονται manual smoke tests.
