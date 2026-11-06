@@ -18,7 +18,7 @@ public static class Program
             return 0;
         }
 
-        if (args[0] is not ("test" or "scan"))
+        if (args[0] is not ("test" or "scan" or "customers"))
         {
             Console.Error.WriteLine("Άγνωστη εντολή. Δες --help.");
             return 2;
@@ -42,8 +42,8 @@ public static class Program
 
             if (parameters.TryGetValue("udl", out var udlPath))
             {
-                if (parameters.Keys.Any(key => key is not ("udl" or "trust-server-certificate")))
-                    throw new ArgumentException("Με --udl επιτρέπεται μόνο το --trust-server-certificate.");
+                if (parameters.Keys.Any(key => key is not ("udl" or "trust-server-certificate" or "search" or "page" or "page-size")))
+                    throw new ArgumentException("Με --udl επιτρέπονται μόνο --search, --page, --page-size και --trust-server-certificate.");
 
                 var imported = await new UdlConnectionFileReader().LoadAsync(udlPath, cancellation.Token);
                 options = imported.Options with
@@ -88,6 +88,19 @@ public static class Program
                 return 0;
             }
 
+            if (args[0] == "customers")
+            {
+                var query = new CustomerQuery(
+                    parameters.GetValueOrDefault("search", ""),
+                    int.Parse(parameters.GetValueOrDefault("page", "1")),
+                    int.Parse(parameters.GetValueOrDefault("page-size", "100")));
+
+                var reader = new CustomerReadService(loggerFactory.CreateLogger<CustomerReadService>());
+                var page = await reader.LoadAsync(options, query, cancellation.Token);
+                Console.WriteLine(JsonSerializer.Serialize(page, new JsonSerializerOptions { WriteIndented = true }));
+                return 0;
+            }
+
             var schema = await service.InspectAsync(options, cancellation.Token);
             Console.WriteLine(JsonSerializer.Serialize(schema, new JsonSerializerOptions { WriteIndented = true }));
             return 0;
@@ -126,7 +139,7 @@ public static class Program
                 throw new ArgumentException("Οι επιλογές πρέπει να έχουν μορφή --όνομα τιμή.");
 
             var key = args[index][2..];
-            if (key is not ("server" or "database" or "auth" or "user" or "port" or "timeout" or "udl" or "trust-server-certificate"))
+            if (key is not ("server" or "database" or "auth" or "user" or "port" or "timeout" or "udl" or "trust-server-certificate" or "search" or "page" or "page-size"))
                 throw new ArgumentException($"Άγνωστη παράμετρος: --{key}");
 
             if (!parsed.TryAdd(key, args[index + 1]))
@@ -144,9 +157,13 @@ public static class Program
               scan --server SERVER --database DB [--auth windows|sql] [--user USER] [--port PORT]
               test --udl "C:\Data\connection.udl"
               scan --udl "C:\Data\connection.udl"
+              customers --udl "C:\Data\connection.udl" [--search TERM] [--page 1] [--page-size 100]
+              customers --server SERVER --database DB [--auth windows|sql] [--user USER] [--search TERM]
               test --udl "C:\Data\connection.udl" --trust-server-certificate false
 
             Η εντολή scan διαβάζει αποκλειστικά SQL metadata και επιστρέφει JSON.
+            Η εντολή customers διαβάζει TblSnCustomer χωρίς αλλαγές και επιστρέφει μία σελίδα JSON.
+            Τα --search, --page, --page-size χρησιμοποιούνται μόνο με customers (10-500 εγγραφές).
             Το --udl υποστηρίζει OLE DB UDL SQL Server και UTF-16/UTF-8.
             Για SQL Authentication μπορείς να ορίσεις AMVROSIA_SQL_PASSWORD.
             Προεπιλογή: Encrypt=Mandatory, TrustServerCertificate=True.
