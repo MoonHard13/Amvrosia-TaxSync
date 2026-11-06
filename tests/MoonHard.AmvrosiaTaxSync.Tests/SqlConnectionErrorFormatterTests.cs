@@ -6,7 +6,7 @@ namespace MoonHard.AmvrosiaTaxSync.Tests;
 [TestClass]
 public sealed class SqlConnectionErrorFormatterTests
 {
-    [DataTestMethod]
+    [TestMethod]
     [DataRow(18456, "login")]
     [DataRow(4060, "βάση")]
     [DataRow(53, "επικοινωνία")]
