@@ -8,6 +8,7 @@ namespace MoonHard.AmvrosiaTaxSync.Desktop.ViewModels;
 public sealed class CustomerListViewModel : INotifyPropertyChanged
 {
     private string _search = "";
+    private bool _onlyWithAfm;
     private int _page = 1;
     private int _pageSize = 100;
     private long _matched;
@@ -23,6 +24,12 @@ public sealed class CustomerListViewModel : INotifyPropertyChanged
     {
         get => _search;
         set => Set(ref _search, value);
+    }
+
+    public bool OnlyWithAfm
+    {
+        get => _onlyWithAfm;
+        set => Set(ref _onlyWithAfm, value);
     }
 
     public int Page => _page;
