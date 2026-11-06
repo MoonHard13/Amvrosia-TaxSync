@@ -30,17 +30,18 @@ public sealed class CustomerReadService(ILogger<CustomerReadService> logger) : I
         var pattern = string.IsNullOrWhiteSpace(query.Search)
             ? null
             : $"%{EscapeLike(query.Search.Trim())}%";
+        var afmText = "NULLIF(LTRIM(RTRIM(CONVERT(nvarchar(40), [CustAFM]))), N'')";
 
         // Η μοναδική δυναμική SQL ονομασία προέρχεται από το SQL Server catalog.
-        var filter = """
+        var filter = $"""
             (@Search IS NULL OR
              CONVERT(nvarchar(100), [CustCode]) LIKE @Search ESCAPE N'~' OR
              CONVERT(nvarchar(400), [CustTitle]) LIKE @Search ESCAPE N'~' OR
              CONVERT(nvarchar(400), [CustName]) LIKE @Search ESCAPE N'~' OR
              CONVERT(nvarchar(40), [CustAFM]) LIKE @Search ESCAPE N'~')
+            AND (@OnlyWithAfm = 0 OR {afmText} IS NOT NULL)
             """;
 
-        var afmText = "NULLIF(LTRIM(RTRIM(CONVERT(nvarchar(40), [CustAFM]))), N'')";
         var statsSql = $"""
             SELECT COUNT_BIG(*),
                    COALESCE(SUM(CASE WHEN {afmText} IS NOT NULL
@@ -67,6 +68,7 @@ public sealed class CustomerReadService(ILogger<CustomerReadService> logger) : I
             count.CommandText = $"SELECT COUNT_BIG(*) FROM {table} WHERE {filter};";
             count.CommandTimeout = 60;
             AddSearchParameter(count, pattern);
+            count.Parameters.Add("@OnlyWithAfm", SqlDbType.Bit).Value = query.OnlyWithAfm;
             matched = Convert.ToInt64(await count.ExecuteScalarAsync(cancellationToken));
         }
 
@@ -88,6 +90,7 @@ public sealed class CustomerReadService(ILogger<CustomerReadService> logger) : I
                 OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY;
                 """;
             AddSearchParameter(command, pattern);
+            command.Parameters.Add("@OnlyWithAfm", SqlDbType.Bit).Value = query.OnlyWithAfm;
             command.Parameters.Add("@Offset", SqlDbType.BigInt).Value = offset;
             command.Parameters.Add("@PageSize", SqlDbType.Int).Value = query.PageSize;
 
@@ -107,8 +110,8 @@ public sealed class CustomerReadService(ILogger<CustomerReadService> logger) : I
         }
 
         logger.LogInformation(
-            "Customer listing completed. Page={Page} PageSize={PageSize} Total={Total} Matched={Matched}.",
-            query.Page, query.PageSize, totals.Total, matched);
+            "Customer listing completed. Page={Page} PageSize={PageSize} Total={Total} Matched={Matched} OnlyWithAfm={OnlyWithAfm}.",
+            query.Page, query.PageSize, totals.Total, matched, query.OnlyWithAfm);
 
         return new CustomerPage(results, totals, matched, query.Page, query.PageSize);
     }
