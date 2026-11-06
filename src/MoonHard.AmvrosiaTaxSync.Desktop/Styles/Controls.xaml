@@ -8,6 +8,32 @@
         <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
     </Style>
 
+    <!-- Τα tooltips διαθέτουν δικό τους θέμα ώστε να διαβάζονται σε Light και Dark Mode. -->
+    <Style TargetType="{x:Type ToolTip}">
+        <Setter Property="Background" Value="{DynamicResource TooltipBackgroundBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TooltipForegroundBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource TooltipBorderBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="FontFamily" Value="Segoe UI"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="MaxWidth" Value="420"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type ToolTip}">
+                    <Border Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="8" Padding="12,9">
+                        <ContentPresenter ContentSource="Content"
+                                          TextElement.Foreground="{DynamicResource TooltipForegroundBrush}"
+                                          TextElement.FontFamily="Segoe UI"
+                                          TextElement.FontSize="12"/>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <Style x:Key="FieldLabel" TargetType="{x:Type TextBlock}">
         <Setter Property="Foreground" Value="{DynamicResource TextMutedBrush}"/>
         <Setter Property="FontSize" Value="13"/>

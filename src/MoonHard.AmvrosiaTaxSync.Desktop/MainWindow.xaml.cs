@@ -60,6 +60,22 @@ public partial class MainWindow : Window
     private void Cancel_Click(object sender, RoutedEventArgs e)
         => _viewModel.Cancel();
 
+    private void CopyDiagnostics_Click(object sender, RoutedEventArgs e)
+    {
+        if (!_viewModel.HasSqlFailure)
+            return;
+
+        try
+        {
+            Clipboard.SetText(_viewModel.CopyableDiagnostic);
+            _viewModel.SetStatusMessage("Η ασφαλής διάγνωση αντιγράφηκε στο πρόχειρο.");
+        }
+        catch (System.Runtime.InteropServices.ExternalException)
+        {
+            _viewModel.SetStatusMessage("Το πρόχειρο των Windows δεν είναι διαθέσιμο. Δοκίμασε ξανά.");
+        }
+    }
+
     private async void HandlePreviewKeyDown(object sender, KeyEventArgs e)
     {
         if (e.Key == Key.Escape)

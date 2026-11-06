@@ -51,3 +51,11 @@ Windows 10/11, .NET 10 SDK και SQL Server με αξιόπιστο TLS certifi
 ## Διαδικασία ανάπτυξης
 
 Feature branch → Pull Request → GitHub Actions → review → merge. Δοκιμές GUI και SQL authentication σε πραγματικά Windows χρειάζονται manual smoke tests.
+
+## SQL connection diagnostics και Tooltips
+
+Ο έλεγχος SQL επιστρέφει πλέον ασφαλή, κατανοητή διάγνωση με SQL Number / State / Severity / Connection ID και ενέργειες αντιμετώπισης αντί για μόνο \`SqlException\`. Το GUI εμφανίζει διαγνωστική κάρτα με λειτουργία αντιγραφής και το CLI χρησιμοποιεί τον ίδιο formatter. Τα tooltips έχουν δικές τους παλέτες Light/Dark με ρητή αντίθεση.
+
+Επίσημη τεκμηρίωση: https://learn.microsoft.com/en-us/sql/connect/ado-net/connection-string-syntax
+
+**Παραμένει απαραίτητος χειροκίνητος έλεγχος SQL σύνδεσης και οπτικός έλεγχος WPF tooltips σε Windows.**

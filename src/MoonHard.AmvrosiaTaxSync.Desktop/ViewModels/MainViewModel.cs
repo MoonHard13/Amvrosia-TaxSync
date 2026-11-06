@@ -3,7 +3,9 @@ using System.ComponentModel;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Windows.Data;
+using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Logging;
+using MoonHard.AmvrosiaTaxSync.Infrastructure.SqlServer.Diagnostics;
 using MoonHard.AmvrosiaTaxSync.Application.Contracts;
 using MoonHard.AmvrosiaTaxSync.Application.Services;
 using MoonHard.AmvrosiaTaxSync.Desktop.Services;
@@ -27,6 +29,10 @@ public sealed class MainViewModel : INotifyPropertyChanged
     private bool _windowsAuthentication = true;
     private bool _isBusy;
     private string _status = "Συμπλήρωσε τα στοιχεία SQL ή φόρτωσε ένα αρχείο UDL.";
+    private string _failureTitle = "";
+    private string _failureGuidance = "";
+    private string _failureTechnical = "";
+    private bool _hasSqlFailure;
     private SchemaObject? _selectedObject;
     private string _schemaSearch = "";
     private string _udlFileName = "Δεν έχει επιλεγεί αρχείο";
@@ -142,6 +148,43 @@ public sealed class MainViewModel : INotifyPropertyChanged
         private set => Set(ref _status, value);
     }
 
+    public string FailureTitle
+    {
+        get => _failureTitle;
+        private set => Set(ref _failureTitle, value);
+    }
+
+    public string FailureGuidance
+    {
+        get => _failureGuidance;
+        private set => Set(ref _failureGuidance, value);
+    }
+
+    public string FailureTechnical
+    {
+        get => _failureTechnical;
+        private set => Set(ref _failureTechnical, value);
+    }
+
+    public bool HasSqlFailure
+    {
+        get => _hasSqlFailure;
+        private set => Set(ref _hasSqlFailure, value);
+    }
+
+    public string CopyableDiagnostic => $"{FailureTitle}\n{FailureGuidance}\n{FailureTechnical}";
+
+    public void SetStatusMessage(string message) => Status = message;
+
+    private void ClearSqlFailure()
+    {
+        HasSqlFailure = false;
+        FailureTitle = "";
+        FailureGuidance = "";
+        FailureTechnical = "";
+        Changed(nameof(CopyableDiagnostic));
+    }
+
     public int ObjectCount => Objects.Count;
     public string SelectedObjectLabel => SelectedObject is null
         ? "Επίλεξε αντικείμενο από τη λίστα"
@@ -254,6 +297,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
             return;
 
         IsBusy = true;
+        ClearSqlFailure();
         using var cancellation = new CancellationTokenSource();
         _cancellation = cancellation;
 
@@ -300,11 +344,25 @@ public sealed class MainViewModel : INotifyPropertyChanged
             Status = ex.Message;
             _logger.LogWarning("Invalid SQL connection settings: {ErrorType}.", ex.GetType().Name);
         }
+        catch (SqlException ex)
+        {
+            var diagnostic = SqlConnectionErrorFormatter.Diagnose(ex);
+            FailureTitle = diagnostic.Title;
+            FailureGuidance = diagnostic.Suggestion;
+            FailureTechnical = diagnostic.TechnicalDetails;
+            HasSqlFailure = true;
+            Changed(nameof(CopyableDiagnostic));
+            Status = $"Αποτυχία SQL #{diagnostic.Number}: {diagnostic.Title}";
+
+            // Καταγράφονται μόνο τεχνικοί κωδικοί και όχι το πλήρες SQL exception.
+            _logger.LogWarning(
+                "SQL operation failed: Number={SqlNumber}, State={SqlState}, Severity={SqlSeverity}, ConnectionId={ConnectionId}.",
+                diagnostic.Number, diagnostic.State, diagnostic.Severity, diagnostic.ConnectionId);
+        }
         catch (Exception ex)
         {
-            // Δεν εμφανίζουμε ολόκληρα connection strings ή ευαίσθητες λεπτομέρειες SQL.
-            Status = $"Η λειτουργία SQL απέτυχε ({ex.GetType().Name}). Έλεγξε σύνδεση, TLS και δικαιώματα.";
-            _logger.LogWarning("SQL operation failed: {ErrorType}.", ex.GetType().Name);
+            Status = $"Η λειτουργία απέτυχε ({ex.GetType().Name}). Δες τα τεχνικά logs.";
+            _logger.LogWarning("Operation failed: {ErrorType}.", ex.GetType().Name);
         }
         finally
         {

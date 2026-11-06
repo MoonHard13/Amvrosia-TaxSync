@@ -22,4 +22,7 @@
     <SolidColorBrush x:Key="SuccessBrush" Color="#91DEB1"/>
     <SolidColorBrush x:Key="FocusBrush" Color="#93D7FF"/>
     <SolidColorBrush x:Key="HoverBrush" Color="#355577"/>
+    <SolidColorBrush x:Key="TooltipBackgroundBrush" Color="#243650"/>
+    <SolidColorBrush x:Key="TooltipForegroundBrush" Color="#F7FAFF"/>
+    <SolidColorBrush x:Key="TooltipBorderBrush" Color="#4A6686"/>
 </ResourceDictionary>

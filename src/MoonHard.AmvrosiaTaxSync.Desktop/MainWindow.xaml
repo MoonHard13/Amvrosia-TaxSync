@@ -102,6 +102,7 @@
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
                 <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
             <Grid Grid.Row="0">
@@ -332,7 +333,36 @@
             </Grid>
 
             <!-- Μόνιμη, ευανάγνωστη περιοχή κατάστασης -->
-            <Border Grid.Row="2" BorderBrush="{DynamicResource BorderBrush}"
+            <!-- Οι κωδικοί και οι οδηγίες διάγνωσης εμφανίζονται χωρίς προσωπικά δεδομένα. -->
+            <Border Grid.Row="2"
+                    Visibility="{Binding HasSqlFailure, Converter={StaticResource BoolToVisibility}}"
+                    Background="{DynamicResource ElevatedBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                    CornerRadius="12" Padding="16" Margin="0,12,0,0">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" Margin="0,0,18,0">
+                        <TextBlock Text="{Binding FailureTitle}" FontWeight="Bold" FontSize="14"
+                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                   TextTrimming="None" TextWrapping="Wrap"/>
+                        <TextBlock Text="{Binding FailureGuidance}" FontSize="12"
+                                   Foreground="{DynamicResource TextMutedBrush}"
+                                   TextTrimming="None" TextWrapping="Wrap" Margin="0,7,0,0"/>
+                        <TextBlock Text="{Binding FailureTechnical}" FontSize="11"
+                                   Foreground="{DynamicResource TextMutedBrush}"
+                                   TextTrimming="None" TextWrapping="Wrap" Margin="0,7,0,0"/>
+                    </StackPanel>
+                    <Button Grid.Column="1" Content="Αντιγραφή διάγνωσης"
+                            Click="CopyDiagnostics_Click" VerticalAlignment="Center"
+                            AutomationProperties.Name="Αντιγραφή ασφαλούς SQL διάγνωσης"
+                            ToolTip="Αντιγράφει κωδικό SQL, State, Severity και Connection ID χωρίς credentials"/>
+                </Grid>
+            </Border>
+
+            <Border Grid.Row="3" BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="0,1,0,0" Margin="0,15,0,0" Padding="0,14,0,0">
                 <Grid>
                     <Grid.ColumnDefinitions>

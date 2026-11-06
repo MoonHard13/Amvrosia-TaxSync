@@ -6,6 +6,7 @@
   <ItemGroup>
     <ProjectReference Include="../../src/MoonHard.AmvrosiaTaxSync.Domain/MoonHard.AmvrosiaTaxSync.Domain.csproj" />
     <ProjectReference Include="../../src/MoonHard.AmvrosiaTaxSync.Application/MoonHard.AmvrosiaTaxSync.Application.csproj" />
+    <ProjectReference Include="../../src/MoonHard.AmvrosiaTaxSync.Infrastructure.SqlServer/MoonHard.AmvrosiaTaxSync.Infrastructure.SqlServer.csproj" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="MSTest.TestFramework" />
     <PackageReference Include="MSTest.TestAdapter" />
