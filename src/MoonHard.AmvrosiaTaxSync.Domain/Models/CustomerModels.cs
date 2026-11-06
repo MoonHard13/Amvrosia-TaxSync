@@ -37,7 +37,7 @@ public sealed record CustomerPage(
     public long PageCount => MatchedCount == 0 ? 0 : (MatchedCount - 1) / PageSize + 1;
 }
 
-public sealed record CustomerQuery(string Search = "", int Page = 1, int PageSize = 100)
+public sealed record CustomerQuery(string Search = "", int Page = 1, int PageSize = 100, bool OnlyWithAfm = false)
 {
     public void Validate()
     {
