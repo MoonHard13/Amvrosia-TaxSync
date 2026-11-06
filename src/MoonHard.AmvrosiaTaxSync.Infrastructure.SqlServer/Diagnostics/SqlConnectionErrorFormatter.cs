@@ -31,6 +31,9 @@ public static class SqlConnectionErrorFormatter
         Guid connectionId = default,
         string? providerMessage = null)
     {
+        // Ο αρνητικός κωδικός προέρχεται από τον Windows TLS provider, όχι από SQL permissions.
+        const int UntrustedCertificateAuthority = -2146893019;
+
         // Διαβάζουμε το μήνυμα μόνο για ταξινόμηση, χωρίς να το εμφανίζουμε ή να το καταγράφουμε.
         var tlsIssue = number == 0 &&
             (Contains(providerMessage, "certificate") ||
@@ -38,7 +41,10 @@ public static class SqlConnectionErrorFormatter
              Contains(providerMessage, "TLS") ||
              Contains(providerMessage, "SSL"));
 
-        var (title, suggestion) = tlsIssue
+        var (title, suggestion) = number == UntrustedCertificateAuthority
+            ? ("Μη έμπιστη αλυσίδα πιστοποιητικού SQL Server (TLS)",
+               "Ο SQL Server παρουσίασε πιστοποιητικό που δεν επαληθεύεται από τον υπολογιστή. Ζήτησε έγκυρο πιστοποιητικό TLS από έμπιστη CA, έλεγξε την αλυσίδα Root/Intermediate και ότι το DNS όνομα ταιριάζει στο SAN. Μην παρακάμπτεις το certificate validation.")
+            : tlsIssue
             ? ("Πρόβλημα TLS / πιστοποιητικού SQL Server",
                "Έλεγξε αν το πιστοποιητικό του SQL Server είναι έμπιστο, έγκυρο και αντιστοιχεί στο όνομα του server. Η εφαρμογή διατηρεί υποχρεωτικό TLS και δεν παρακάμπτει την πιστοποίηση.")
             : number switch
