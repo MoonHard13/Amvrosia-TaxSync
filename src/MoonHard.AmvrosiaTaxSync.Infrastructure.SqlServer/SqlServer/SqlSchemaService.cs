@@ -39,6 +39,8 @@ public sealed class SqlSchemaService(ILogger<SqlSchemaService> logger) : ISqlSch
         SqlConnectionOptions options, CancellationToken cancellationToken = default)
     {
         options.Validate();
+        if (options.TrustServerCertificate)
+            logger.LogWarning("SQL connection requested without server certificate identity verification.");
 
         await using var connection = new SqlConnection(BuildConnectionString(options));
         await connection.OpenAsync(cancellationToken);
@@ -62,6 +64,8 @@ public sealed class SqlSchemaService(ILogger<SqlSchemaService> logger) : ISqlSch
         SqlConnectionOptions options, CancellationToken cancellationToken = default)
     {
         options.Validate();
+        if (options.TrustServerCertificate)
+            logger.LogWarning("SQL schema inspection requested without server certificate identity verification.");
 
         await using var connection = new SqlConnection(BuildConnectionString(options));
         await connection.OpenAsync(cancellationToken);
@@ -108,7 +112,7 @@ public sealed class SqlSchemaService(ILogger<SqlSchemaService> logger) : ISqlSch
             InitialCatalog = options.Database.Trim(),
             IntegratedSecurity = options.WindowsAuthentication,
             Encrypt = SqlConnectionEncryptOption.Mandatory,
-            TrustServerCertificate = false,
+            TrustServerCertificate = options.TrustServerCertificate,
             ConnectTimeout = options.TimeoutSeconds,
             PersistSecurityInfo = false,
             ApplicationName = "Amvrosia TaxSync by MoonHard"

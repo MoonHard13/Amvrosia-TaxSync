@@ -27,6 +27,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
     private string _timeout = "15";
     private string _username = "";
     private bool _windowsAuthentication = true;
+    private bool _trustServerCertificate;
     private bool _isBusy;
     private string _status = "Συμπλήρωσε τα στοιχεία SQL ή φόρτωσε ένα αρχείο UDL.";
     private string _failureTitle = "";
@@ -76,7 +77,15 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public ObservableCollection<SchemaColumn> SelectedColumns { get; } = [];
     public ICollectionView SchemaView { get; }
 
-    public string Server { get => _server; set => Set(ref _server, value); }
+    public string Server
+    {
+        get => _server;
+        set
+        {
+            if (Set(ref _server, value))
+                DisableCertificateOverride();
+        }
+    }
     public string Database { get => _database; set => Set(ref _database, value); }
     public string Port { get => _port; set => Set(ref _port, value); }
     public string Timeout { get => _timeout; set => Set(ref _timeout, value); }
@@ -129,6 +138,38 @@ public sealed class MainViewModel : INotifyPropertyChanged
     }
 
     public bool IsSqlAuthentication => !WindowsAuthentication;
+
+    public bool TrustServerCertificate => _trustServerCertificate;
+
+    public string CertificateTrustButtonText => TrustServerCertificate
+        ? "Απενεργοποίηση εξαίρεσης TLS"
+        : "Εξαίρεση πιστοποιητικού (μόνο δοκιμές)";
+
+    public string CertificateTrustDetails => TrustServerCertificate
+        ? "Η επαλήθευση ταυτότητας SQL Server είναι ανενεργή για αυτή τη συνεδρία. Η σύνδεση παραμένει κρυπτογραφημένη."
+        : "Ασφαλής προεπιλογή: κρυπτογραφημένη σύνδεση με έλεγχο πιστοποιητικού.";
+
+    public void EnableCertificateOverride()
+    {
+        if (IsBusy || !Set(ref _trustServerCertificate, true, nameof(TrustServerCertificate)))
+            return;
+
+        Changed(nameof(CertificateTrustButtonText));
+        Changed(nameof(CertificateTrustDetails));
+        Status = "ΠΡΟΕΙΔΟΠΟΙΗΣΗ: Προσωρινή εξαίρεση TLS ενεργή για γνωστό δοκιμαστικό SQL Server.";
+        _logger.LogWarning("User enabled session-only server certificate validation bypass.");
+    }
+
+    public void DisableCertificateOverride()
+    {
+        if (IsBusy || !Set(ref _trustServerCertificate, false, nameof(TrustServerCertificate)))
+            return;
+
+        Changed(nameof(CertificateTrustButtonText));
+        Changed(nameof(CertificateTrustDetails));
+        Status = "Η επαλήθευση πιστοποιητικού TLS είναι ενεργή.";
+        _logger.LogInformation("Server certificate verification enabled.");
+    }
 
     public bool IsBusy
     {
@@ -237,6 +278,11 @@ public sealed class MainViewModel : INotifyPropertyChanged
         {
             Status = "Διαβάζονται οι ρυθμίσεις UDL...";
             var imported = await _udlReader.LoadAsync(path, cancellation.Token);
+            // Η εξαίρεση δεν κληρονομείται από άλλο UDL ή προηγούμενο SQL server.
+            _trustServerCertificate = false;
+            Changed(nameof(TrustServerCertificate));
+            Changed(nameof(CertificateTrustButtonText));
+            Changed(nameof(CertificateTrustDetails));
             Server = imported.Options.Server;
             Database = imported.Options.Database;
             Port = imported.Options.Port.ToString();
@@ -309,7 +355,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
                 throw new ArgumentException("Μη έγκυρο connection timeout.");
 
             var options = new SqlConnectionOptions(
-                Server, Database, WindowsAuthentication, Username, password, port, timeout);
+                Server, Database, WindowsAuthentication, Username, password, port, timeout,
+                TrustServerCertificate);
 
             Status = inspect ? "Γίνεται read-only επιθεώρηση schema..." : "Δοκιμάζεται η σύνδεση SQL...";
             if (inspect)

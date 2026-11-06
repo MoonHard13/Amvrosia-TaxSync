@@ -60,6 +60,36 @@ public partial class MainWindow : Window
     private void Cancel_Click(object sender, RoutedEventArgs e)
         => _viewModel.Cancel();
 
+    private void CertificateTrust_Click(object sender, RoutedEventArgs e)
+        => ToggleCertificateTrust();
+
+    private void ToggleCertificateTrust()
+    {
+        if (_viewModel.IsBusy)
+            return;
+
+        if (_viewModel.TrustServerCertificate)
+        {
+            _viewModel.DisableCertificateOverride();
+            return;
+        }
+
+        var choice = MessageBox.Show(
+            this,
+            "Η επιλογή αυτή παρακάμπτει την επαλήθευση του πιστοποιητικού SQL Server.\n\n" +
+            "Η μεταφορά εξακολουθεί να κρυπτογραφείται, αλλά δεν επαληθεύεται η ταυτότητα του server. " +
+            "Αυτό αυξάνει τον κίνδυνο υποκλοπής από ενδιάμεσο επιτιθέμενο.\n\n" +
+            "Να ενεργοποιηθεί ΜΟΝΟ για γνωστή, ελεγχόμενη δοκιμαστική εγκατάσταση; " +
+            "Η επιλογή δεν αποθηκεύεται και απενεργοποιείται στην επόμενη εκκίνηση.",
+            "Προσωρινή εξαίρεση επαλήθευσης TLS",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Warning,
+            MessageBoxResult.No);
+
+        if (choice == MessageBoxResult.Yes)
+            _viewModel.EnableCertificateOverride();
+    }
+
     private void CopyDiagnostics_Click(object sender, RoutedEventArgs e)
     {
         if (!_viewModel.HasSqlFailure)
@@ -92,6 +122,11 @@ public partial class MainWindow : Window
         {
             e.Handled = true;
             _viewModel.ToggleTheme();
+        }
+        else if (Keyboard.Modifiers == (ModifierKeys.Control | ModifierKeys.Shift) && e.Key == Key.C)
+        {
+            e.Handled = true;
+            ToggleCertificateTrust();
         }
         else if (Keyboard.Modifiers == ModifierKeys.Control && e.Key == Key.D1)
         {
