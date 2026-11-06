@@ -13,6 +13,14 @@ public sealed class CustomerQueryTests
     }
 
     [TestMethod]
+    public void OnlyWithAfm_FilterCanBeEnabled()
+    {
+        var query = new CustomerQuery("Α", 1, 100, true);
+        query.Validate();
+        Assert.IsTrue(query.OnlyWithAfm);
+    }
+
+    [TestMethod]
     public void InvalidPage_IsRejected()
     {
         Assert.ThrowsExactly<ArgumentOutOfRangeException>(
